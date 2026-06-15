@@ -1,0 +1,1606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>1st Jerra Scout Activity Planner</title>
+
+  <!-- Tailwind CSS CDN (Play CDN — supports custom config) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'brand-purple':  '#6B2D8B',
+            'brand-gold':    '#F5A800',
+            'brand-green':   '#2D6A2D',
+            'brand-red':     '#CC0000',
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- React 18 + ReactDOM + Babel (for in-browser JSX) -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    /* CSS-variable driven brand palette — supplements Tailwind custom colours */
+    :root {
+      --purple:       #6B2D8B;
+      --purple-dark:  #4B0D6B;
+      --purple-light: #8B4DAB;
+      --gold:         #F5A800;
+      --green:        #2D6A2D;
+      --red:          #CC0000;
+    }
+
+    /* Gradient helpers (can't express in Tailwind config easily) */
+    .hdr-gradient  { background: linear-gradient(135deg, #6B2D8B 0%, #4B0D6B 100%); }
+    .tip-gradient  { background: linear-gradient(150deg, #5A1A7A 0%, #8B4DAB 100%); }
+    .gold-gradient { background: linear-gradient(135deg, #F5A800 0%, #E09600 100%); }
+
+    /* Progress bar animation */
+    .pbar { transition: width 0.45s cubic-bezier(.4,0,.2,1); }
+
+    body { font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; }
+
+    /* Custom scrollbar for modals */
+    .modal-scroll::-webkit-scrollbar { width: 6px; }
+    .modal-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
+    .modal-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+
+    /* Smooth section transitions */
+    .fade-in { animation: fadeIn 0.2s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  </style>
+</head>
+
+<body class="bg-gray-100 min-h-screen">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useCallback } = React;
+
+    /* ══════════════════════════════════════════════════════════════
+       EMBEDDED LIBRARY DATA  (source: library_seed.json)
+       All 8 past 1st Jerra activities with full risk assessments.
+    ══════════════════════════════════════════════════════════════ */
+    const LIBRARY_DATA = {
+      meta: {
+        version: "1.0",
+        generated: "2026-06-12",
+        source: "1st Jerrabomberra Scout Group — past activity plans and risk assessments",
+        policy_version: "PRO75 v1.0 (Jan 2022) — last checked Jun 2026",
+        activities_count: 8
+      },
+      activities: [
+        {
+          id: "act-001",
+          title: "OAS Stage 4 Overnight Hike — Kambah Pool to Cotter Bend",
+          type: "hike", oas_stage: 4, date: "2024-11-23", duration_nights: 1,
+          location: {
+            name: "Murrumbidgee Corridor / Lower Cotter Catchment", region: "ACT",
+            park: "ACT Parks", start_point: "Kambah Pool Carpark (GR 827810)",
+            finish_point: "Cotter Bend Carpark (GR 761888)",
+            track_grade: "AWTGS Grade 4", distance_km: 28, terrain: "tracked"
+          },
+          supervision: "direct",
+          participants: { youth_count: 14, min_oas_stage: 3, leader_count: 2 },
+          weather: { season: "spring", temp_range: "9-23°C", actual: "33°C hot and sunny" },
+          equipment: {
+            group: ["compasses","maps","MSR water filter","6x 2-person hike tents","2x UHF radios","SPOT beacon"],
+            individual: ["hike pack 50L","tent shared","sleeping bag/mattress","gas stove/pot set shared",
+              "water bottles 1.5L min","wet/cold weather clothes","hike boots","long-sleeve shirt",
+              "broad-brimmed hat","water shoes","personal first aid kit","maps and compass per buddy pair"]
+          },
+          menu: { meals: "2x lunches, 1x dinner, 1x breakfast, snacks",
+            water_plan: "Min 1.5L each. Patrol water filter for resupply from Murrumbidgee/Cotter Rivers. Potable water at campground." },
+          comms: { primary: "UHF Channel 16", alternate: "UHF Channel 27", emergency: "SPOT beacon" },
+          safe_havens: ["Cotter Reserve Campground (GR 771891)"],
+          overdue_time: "18:00 Sun 24 Nov 24",
+          hospital: "Woden Hospital — 02 5124 0000",
+          cancellation_triggers: ["severe adverse weather","high fire danger","NP closure","fewer than 5 scouts or 2 leaders"],
+          hazards: [
+            { hazard: "Slips, trips and falls on uneven/rocky terrain", initial_risk: "HIGH", residual_risk: "LOW",
+              controls: ["Activity safety brief pre-departure","Individual first aid kits","Appropriate footwear","Stay 2 body-lengths from cliff edges","Increased care in hazardous areas"] },
+            { hazard: "Lost or separated participant", initial_risk: "MEDIUM", residual_risk: "MEDIUM",
+              controls: ["Buddy system","Map and compass per buddy pair","Navigation refresher","Regular head counts","3-whistle signal, stay put","Patrol discipline — PL/APL lead/sweep"] },
+            { hazard: "Overweight packs / musculoskeletal injury", initial_risk: "MEDIUM", residual_risk: "LOW",
+              controls: ["Pack weight limited to 20% body weight","Kit check and weigh prior to departure","Correct lifting technique","Buddy assist for packs"] },
+            { hazard: "Sunburn, dehydration, hyperthermia", initial_risk: "HIGH", residual_risk: "MEDIUM",
+              controls: ["Min 1.5L water each","Sunscreen applied regularly","Wide-brimmed hat and long-sleeve shirt","Regular water breaks on trail","Shade for rest stops","Water filter for resupply"] },
+            { hazard: "Dangerous fauna (snakes, spiders, insects)", initial_risk: "MEDIUM", residual_risk: "MEDIUM",
+              controls: ["Snake encounter briefing","Snake bite bandage in personal first aid kit","Insect repellent","Appropriate clothing and socks","Tents zipped up"] },
+            { hazard: "Extreme weather (lightning, high winds, sub-zero, bushfire)", initial_risk: "HIGH", residual_risk: "MEDIUM",
+              controls: ["Monitor BOM forecast pre-activity","Check Fires Near Me","Cancel if extreme fire danger","Move to safe haven if severe weather arises during activity","Avoid dead-fall trees in high winds","Shelter if lightning within 5km"] },
+            { hazard: "Waterway crossing on route", initial_risk: "HIGH", residual_risk: "MEDIUM",
+              controls: ["Recon all water features before crossing","No crossing still water above hip, moving water above knee","AA Leader with river crossing qualification supervises","Group supported formation — no solo crossings","Alternate routes identified"] },
+            { hazard: "Burns or cuts from meal preparation", initial_risk: "MEDIUM", residual_risk: "MEDIUM",
+              controls: ["Safe stove use training/refresher before departure","Participants empowered to call out unsafe practices"] },
+            { hazard: "Pre-existing injury, illness or allergy (including anaphylaxis)", initial_risk: "HIGH", residual_risk: "MEDIUM",
+              controls: ["Confirm all medical conditions via Operoo pre-departure","Action plans agreed with parents","EpiPen carried by participant and leader","Activity adjusted or participant excluded if needed"] },
+            { hazard: "Participant struck by vehicle or bike on trail", initial_risk: "HIGH", residual_risk: "MEDIUM",
+              controls: ["Controlled road crossings at pedestrian crossings","No walking on high-traffic roads","Alert all to approaching vehicles — move off trail","Trail guides front and rear wear fluro vest on roads"] },
+            { hazard: "Bushfire from camp cooking", initial_risk: "HIGH", residual_risk: "MEDIUM",
+              controls: ["Hike stove safety refresher before use","1m clearance from flammable material","No stoves in tents","Designated fire places only for campfires"] }
+          ]
+        },
+        {
+          id: "act-002",
+          title: "OAS Stage 4 Overnight Hike #2 — Honeysuckle Creek / Booroomba Rocks",
+          type: "hike", oas_stage: 4, date: "2025-11-22", duration_nights: 1,
+          location: {
+            name: "Booroomba Rocks — Orroral Valley, Namadgi NP", region: "ACT",
+            park: "Namadgi National Park", start_point: "Booroomba Rocks carpark (GR 802620)",
+            finish_point: "Orroral Tracking Station carpark (GR 771554)",
+            track_grade: "AWTGS Grade 4", distance_km: 20, terrain: "tracked"
+          },
+          supervision: "direct",
+          participants: { youth_count: 8, min_oas_stage: 3, leader_count: 4 },
+          weather: { season: "spring", temp_range: "6-20°C" },
+          equipment: {
+            group: ["compasses","maps","MSR water filter","4x UHF radios","Garmin InReach (PL and AA Leader)"],
+            individual: ["hike pack 50L","tent shared","sleeping bag/mattress","gas stove/pot set shared",
+              "water bottles 1.5L min","wet/cold weather clothes","hike boots","long-sleeve shirt",
+              "broad-brimmed hat","water shoes","personal first aid kit","maps and compass (PL and APL)"]
+          },
+          menu: { meals: "2x lunches, 1x dinner, 1x breakfast, snacks",
+            water_plan: "Min 1.5L each. Potable water at campground. Patrol water filter for resupply from Orroral River." },
+          comms: { primary: "Voice and UHF Channel 39", alternate: "UHF Channel 27 / mobile phones",
+            contingency: "Garmin InReach satellite text", emergency: "Garmin InReach PLB" },
+          safe_havens: ["Honeysuckle Creek Campground (GR 789604)","Orroral Former Tracking Station (GR 771554)"],
+          overdue_time: "20:00 Sun 23 Nov 25",
+          hospital: "Woden Hospital (120km/90min) — 02 5124 0000",
+          cancellation_triggers: ["severe adverse weather","high fire danger","NP closure","fewer than 5 scouts or 2 leaders"],
+          special_hazards: ["Booroomba Rocks cliff edge — stay 2 body-lengths from edge",
+            "Potential shallow Orroral River crossing at GR 766563"],
+          hazards: [
+            { hazard: "Slips, trips and falls including cliff edge at Booroomba Rocks", initial_risk: "HIGH", residual_risk: "LOW",
+              controls: ["Activity safety brief","Individual first aid kits","Appropriate footwear","Stay minimum 2 body-lengths from cliff edges at Booroomba Rocks","Increased care in hazardous areas"] },
+            { hazard: "Waterway crossing — Orroral River", initial_risk: "HIGH", residual_risk: "MEDIUM",
+              controls: ["Recon before crossing","AA Leader supervises with river crossing qualification","No crossing if above knee in moving water","Group supported formation"] },
+            { hazard: "Lost or separated participant", initial_risk: "MEDIUM", residual_risk: "MEDIUM",
+              controls: ["Buddy system","Map and compass (PL and APL)","Regular head counts","3-whistle signal","InReach for emergency comms"] },
+            { hazard: "Sunburn, dehydration, hyperthermia", initial_risk: "HIGH", residual_risk: "MEDIUM",
+              controls: ["Min 1.5L water each","Sunscreen","Wide-brimmed hat and long sleeve","Regular water breaks","Patrol water filter for resupply"] },
+            { hazard: "Extreme weather (fire, lightning, cold)", initial_risk: "HIGH", residual_risk: "MEDIUM",
+              controls: ["Check BOM and Fires Near Me pre-activity","Cancel if extreme fire danger","Safe haven identified","Shelter within 5km of lightning"] }
+          ]
+        },
+        {
+          id: "act-003",
+          title: "Scout Patrol Standing Camps — Kowen Forest",
+          type: "camp", oas_stage: "3-5", date: "2025-06-07", duration_nights: 2,
+          location: { name: "Old Kowen Homestead, Kowen Forest", region: "ACT", park: "Kowen Forest", terrain: "established campsite" },
+          supervision: "indirect",
+          participants: { groups: ["Scouts","Venturers","Senior Cubs"], leader_count: 8 },
+          weather: { season: "winter", temp_range: "2-11°C", notes: "Humidity ~84%, ~73mm rain in June" },
+          equipment: {
+            group: ["UHF radios","compasses","patrol tents","cooking stores","shelter","group trailer","BBQ trailer"],
+            individual: ["sleeping gear","personal clothing","dilly bag","chair","BP pack contents"]
+          },
+          menu: { meals: "Youth-developed patrol menus", water_plan: "200L held at safety vehicle for refills" },
+          comms: { primary: "UHF Channel 16", alternate: "UHF Channel 27 / mobile" },
+          safe_havens: ["Old Kowen Homestead picnic shelter"],
+          overdue_time: "16:00 Mon 10 Jun 25",
+          hospital: "Queanbeyan Hospital (12km) — 02 5124 0000",
+          cancellation_triggers: ["severe adverse weather"],
+          hazards: [
+            { hazard: "Slips, trips, falls in camp environment", initial_risk: "LOW", residual_risk: "LOW",
+              controls: ["Leader supervision","Personal first aid kits","Youth first aid qualified participants in patrol"] },
+            { hazard: "Cold weather exposure / hypothermia", initial_risk: "MEDIUM", residual_risk: "LOW",
+              controls: ["Sleeping bag rated to 0°C minimum","Layered clothing","Shelter from wind","Monitor participants"] }
+          ]
+        },
+        {
+          id: "act-004",
+          title: "Scouts Paddling Night — Lake Jerrabomberra",
+          type: "paddling", oas_stage: "1-3", date: "2025-12-09", duration_nights: 0,
+          location: { name: "Queanbeyan River / Lake Jerrabomberra", region: "ACT", water_grade: "Inland Flat Water" },
+          supervision: "direct",
+          participants: { youth_count: 30, leader_count: 7 },
+          supervision_ratio: "1:6 desired, 1:8 minimum",
+          weather: { season: "summer", temp_range: "12-26°C", wind_limit: "Cancel if winds over 20 km/h" },
+          equipment: {
+            group: ["kayaks/canoes","PFDs","paddles","remote first aid kit","UHF radios","throw rope","safety craft"],
+            individual: ["PFD (fitted and checked)","enclosed shoes","appropriate clothing"]
+          },
+          menu: { meals: "Pizza after activity", water_plan: "Min 1L per person" },
+          comms: { primary: "Mobile phone (Activity Leader)", alternate: "Group UHF radios" },
+          safe_havens: ["Queanbeyan Suspension Bridge East","Queen Elizabeth Playground"],
+          overdue_time: "21:00",
+          hospital: "Queanbeyan Hospital — 02 6150 7000",
+          cancellation_triggers: ["winds over 20 km/h","lightning storm","extreme cold below 2°C daytime",
+            "catastrophic bushfire danger","unsafe water levels (flooding)","unsafe water quality",
+            "supervision ratio above 1:6","insufficient/unserviceable equipment"],
+          hazards: [
+            { hazard: "Participant separated from craft / drowning", initial_risk: "HIGH", residual_risk: "MODERATE",
+              controls: ["Activity boundaries established","Buddy/crew system enforced","Person-overboard drill explained and practiced","Safety Officer Afloat on water at all times","Throw rope deployed","Constant leader vigilance"] },
+            { hazard: "Capsize / swamp / collision between craft", initial_risk: "HIGH", residual_risk: "MODERATE",
+              controls: ["Participants briefed to stay with craft","Canoe recovery and re-entry practiced","Safety boat alongside participants","All fouling hazards minimised in craft"] },
+            { hazard: "Impact with submerged objects or bank", initial_risk: "HIGH", residual_risk: "MODERATE",
+              controls: ["Dedicated safety craft on water at all times","Avoid dangerous areas","Throw rope practiced"] },
+            { hazard: "Slips, trips and falls on bank / jetty", initial_risk: "MODERATE", residual_risk: "LOW",
+              controls: ["Enclosed shoes required","Activities conducted clear of hazardous ground","First Aid Officer Safety Ashore appointed"] },
+            { hazard: "Unsafe lifting of canoes/kayaks (trailer loading)", initial_risk: "MODERATE", residual_risk: "MODERATE",
+              controls: ["Spine-safe lifting technique briefed","Trailer secured before loading","Sufficient adult assistance for overhead lifts","Monitor fatigue levels"] },
+            { hazard: "Pre-existing medical condition", initial_risk: "HIGH", residual_risk: "MODERATE",
+              controls: ["Operoo profiles checked pre-activity","Medications supervised by First Aid Officer","Participant excluded if condition prevents safe participation"] }
+          ]
+        },
+        {
+          id: "act-005",
+          title: "Liam's Stage 5 Adventurous Journey — Namadgi National Park",
+          type: "hike", oas_stage: 5, date: "2026-04-17", duration_nights: 2,
+          location: {
+            name: "Namadgi NP — Visitor Centre to Orroral Tracking Station", region: "ACT",
+            park: "Namadgi National Park", start_point: "Namadgi Visitor Centre",
+            finish_point: "Orroral Tracking Station",
+            route_description: "Day 1: Visitor Centre → Cyprus Pine Lookout → Mt Tennent (day pack) → campsite (9.5km). Day 2: Camp → Honeysuckle Campground via Booroomba Rocks (10.5km). Day 3: Honeysuckle → Orroral Tracking Station (9.5km).",
+            track_grade: "AWTGS Grade 4", distance_km: 29.5, terrain: "tracked"
+          },
+          supervision: "indirect (shadow party)",
+          participants: {
+            youth_names: ["Liam (PL)","Oliver","Arie","Isla","Sailah"],
+            youth_count: 5,
+            leader_shadow: ["Sparky (Jarrod Rolfe)","Raptor (Mick Thompson)","Magani (Terry Jasch)","Kultarr (Robert de Ligt)","Gecko (Andrew Plaisted)"]
+          },
+          weather: { season: "autumn", temp_range: "6-18°C", actual: "High 17-18°C, low 6-9°C, mostly cloudy" },
+          equipment: {
+            group: ["Garmin InReach","UHF radios","water purifiers x2","patrol repair kit"],
+            individual: ["hike pack","tent shared","sleeping bag","sleeping mat","gas stove/pot set",
+              "water bottles x2 (2L min)","rain jacket","warm clothes","hike boots","broad-brimmed hat",
+              "sunscreen","insect repellent","personal first aid kit incl. 2x snake bite bandages",
+              "whistle","torch","maps and compass (PL/APL)"]
+          },
+          menu: {
+            day1_dinner: "Pasta with pasta sauce and dehydrated mince",
+            day2_dinner: "Individual dehydrated meals",
+            breakfasts: "Cereal (with/without dehydrated milk) or two-minute noodles",
+            day2_lunch: "Salami and crackers",
+            day3_lunch: "Lunch at bakery in Tuggeranong (review stop)",
+            snacks: "Scroggin (lollies, dried fruit, chocolate, pretzels), jerky",
+            meals: "3-day 2-night AJ menu — see route plan",
+            water_plan: "2L each leaving camp each day. Water purification from streams each day. 2x water purifiers carried."
+          },
+          comms: { primary: "UHF radio to shadow party (report at each track junction)", alternate: "Mobile phone", emergency: "Garmin InReach SOS" },
+          safe_havens: ["Honeysuckle Creek Campground","Orroral Tracking Station"],
+          hospital: "Woden Hospital — 02 5124 0000",
+          cancellation_triggers: ["extreme fire danger","active bushfire alert","severe adverse weather"],
+          special_notes: "Nut allergy in patrol — no peanuts. Patrol to radio shadow party at each track junction. No Learner Drivers. Drive in convoy.",
+          hazards: [
+            { hazard: "Extreme weather (heat, cold, rain, wind, lightning, bushfire)", initial_risk: "HIGH", residual_risk: "MEDIUM",
+              controls: ["Monitor BOM leading up to hike","Cancel if extreme fire danger","Carry rain jacket and warm layers","Seek shelter if lightning within 5km","Don't camp under trees","Leader car at night 2 with spare clothing"] },
+            { hazard: "Slips, trips, falls on rocky/steep terrain", initial_risk: "HIGH", residual_risk: "MEDIUM",
+              controls: ["Adequate space between individuals on steep sections","Stay 2 body-lengths from cliff edges","Route card knowledge for safest path","Ankle-supporting footwear","Pack weight minimised to reduce fall injury"] },
+            { hazard: "Hypothermia (cold weather / wet clothes)", initial_risk: "MEDIUM", residual_risk: "LOW",
+              controls: ["Carry spare clothing for weather change","Monitor participants","Leader car with spare clothing at night 2 camp"] },
+            { hazard: "Cuts, bites, stings (snakes, ticks, insects)", initial_risk: "HIGH", residual_risk: "MEDIUM",
+              controls: ["2x snake bite bandages per participant","Large first aid kit with leaders","Tick removal kits with leaders","Insect repellent","Appropriate clothing and enclosed shoes","Tents zipped at all times"] },
+            { hazard: "Sunburn, hyperthermia, dehydration", initial_risk: "HIGH", residual_risk: "MEDIUM",
+              controls: ["Min 2L water each leaving camp","Sunscreen applied (PL checks)","Wide-brimmed hat and long-sleeve shirt","Regular breaks with buddy checks on water intake","Shade during peak heat","Radio leaders if showing signs of heat stress"] },
+            { hazard: "Fatigue and exhaustion", initial_risk: "MEDIUM", residual_risk: "LOW",
+              controls: ["Adjust speed to slowest participant","Rotate patrol duties to spread load","Regular rest and snack/water stops","Monitor all participants for fatigue signs","All patrol members have prior multi-day hike experience"] },
+            { hazard: "Navigation error / participants lost", initial_risk: "MEDIUM", residual_risk: "LOW",
+              controls: ["Double-check decisions with APL","Radio shadow party at every track junction","Buddy system","3-whistle signal, stay put","Spare meal carried by all","InReach for emergency"] },
+            { hazard: "Medical conditions (anaphylaxis — nut allergy, asthma, diabetes)", initial_risk: "HIGH", residual_risk: "MEDIUM",
+              controls: ["No peanuts in patrol food","Leaders AND youth carry EpiPen","Confirm all medications before departure","Follow medical action plans"] },
+            { hazard: "Equipment failure", initial_risk: "MEDIUM", residual_risk: "LOW",
+              controls: ["Buddy system for borrowing equipment","Spare water purifier with shadow party","Repair kit (zip ties, tape)","Contact shadow party via radio if needed"] },
+            { hazard: "Contaminated water / poor hygiene", initial_risk: "MEDIUM", residual_risk: "LOW",
+              controls: ["2x water purifiers carried","Streams identified each day for resupply","Hand washing/sanitiser before eating","Wash cooking gear after use","Toileting plan on trail","Sealed food storage to deny fauna"] },
+            { hazard: "Vehicle accident travelling to/from hike", initial_risk: "HIGH", residual_risk: "MEDIUM",
+              controls: ["Leaders driving youth only","Written informed consent for travel via Scout Hub","All vehicles registered/insured, licensed drivers, zero BAC, speed limits","Drive in convoy","Pre-planned route","Load/unload away from traffic areas"] }
+          ]
+        },
+        {
+          id: "act-006",
+          title: "Swimming and Aquatics Skills Night — ADFA Pool",
+          type: "swimming", oas_stage: "2-4", date: "2026-04-28", duration_nights: 0,
+          location: { name: "ADFA Indoor Sports Centre", address: "Building 5, Campbell ACT 2612", venue_type: "indoor pool" },
+          supervision: "direct",
+          participants: { group: "Scout Unit", notes: "Self-declared ability groups per patrol" },
+          equipment: {
+            group: ["PFDs for practical activities","snorkels and masks"],
+            individual: ["swimming shorts/rash vest","Scout shirt","swimming goggles (optional)","towel and thongs",
+              "change of clothes","old shirt/trousers/shoes (Stage 4 rescue skills)"]
+          },
+          menu: { meals: "Not applicable", water_plan: "Water available on site" },
+          comms: { primary: "Activity Coordinator — Jarrod Rolfe 0413 987 105", emergency: "000" },
+          cancellation_triggers: ["fewer than 2 COAL/Scouting Adventure leaders on site"],
+          special_notes: "All activities optional — no Scout forced to participate in any activity they are not comfortable with. ADFA pool staff on-hand for venue emergencies.",
+          hazards: [
+            { hazard: "Drowning or near-drowning", initial_risk: "HIGH", residual_risk: "LOW",
+              controls: ["Qualified Basic Water Rescue leader supervising","Minimum 2 adults at all times","Participants grouped by self-declared ability","ADFA pool staff on hand","Activities optional — no forced participation"] },
+            { hazard: "Slip and fall on pool surrounds", initial_risk: "MEDIUM", residual_risk: "LOW",
+              controls: ["Indoor pool venue with standard safety infrastructure","ADFA staff on hand"] },
+            { hazard: "Pre-existing medical conditions (asthma, allergy)", initial_risk: "MEDIUM", residual_risk: "LOW",
+              controls: ["Participants bring own EpiPen and salbutamol inhaler","Medical conditions confirmed pre-activity","ADFA staff support for evacuation if required"] }
+          ]
+        },
+        {
+          id: "act-007",
+          title: "Group Vertical Day — White Rocks (Abseil and Climb)",
+          type: "vertical", oas_stage: "1-6", date: "2024-09-14", duration_nights: 0,
+          location: {
+            name: "White Rocks, Queanbeyan", region: "NSW",
+            coordinates: { cliff: "-35.381342, 149.247640", parking: "Wickerslack Lane (opp. no. 44) -35.387832, 149.239765" },
+            tenure: "Crown Land — known climbing area, no permit required"
+          },
+          supervision: "direct",
+          participants: { groups: ["Joeys","Cubs","Scouts","Venturers","Leaders"],
+            notes: "Cubs/Joeys in patrol groups no greater than 4 with Venturer or Leader as safety number" },
+          weather: { season: "spring", cancellation_triggers: ["thunderstorm","heavy rain","winds over 39 km/h"] },
+          equipment: {
+            group: ["Harnesses x20","Helmets x25","Static rope 40m x3 (mainline)","Dynamic rope 20m x3 (belay)",
+              "Assorted descenders x20","Prusiks x12","Rigging carabiners x26","Assorted tape slings x9",
+              "Remote first aid kit","Tarp shelter"],
+            individual: ["Water bottle (2-4 litres)","Appropriate footwear with good grip and ankle support",
+              "Hat","Warm clothes and raincoat","Day pack","Personal first aid kit","Snacks/lunch","Gloves (recommended)"]
+          },
+          menu: { meals: "BYO lunch and snacks", water_plan: "Min 2L per person (2-4L recommended for hot days)" },
+          comms: { primary: "Mobile phone (full coverage at site)", emergency: "Call 000" },
+          safe_havens: ["Below cliff — helmet and harness required cliff-side of safe haven"],
+          hospital: "Queanbeyan Hospital, 107 Collett St Queanbeyan NSW 2620",
+          cancellation_triggers: ["Thunderstorm","Heavy rain","Winds over 39 km/h","Significant rain in prior 48 hours (re-inspection required)"],
+          leadership: {
+            aa_leader: "Dave Burr — VL, Abseiling Guide, Wilderness First Aid",
+            first_aid: "Emma Burr — CSL, First Aid",
+            additional: "Jarrod Rolfe — SL, First Aid"
+          },
+          hazards: [
+            { hazard: "Fall from height during abseil or climb", initial_risk: "HIGH", residual_risk: "MEDIUM",
+              controls: ["ABCDE safety check before every descent/ascent","Helmets worn cliff-side of safe haven at all times","Lowerable belay (MMO) with separate top belay backup","Guide raises/lowers abseiler in event of misadventure","Control group size"] },
+            { hazard: "Suspension trauma (participant hanging in harness over 5 min)", initial_risk: "HIGH", residual_risk: "LOW",
+              controls: ["Rescue plan in place before activity commences","Rescue capable of starting immediately","Unconscious patient removed from cliff or placed horizontal within 5 minutes","Releasable/lockable abseil systems used"] },
+            { hazard: "Falling objects (rocks, debris, dropped equipment)", initial_risk: "HIGH", residual_risk: "MEDIUM",
+              controls: ["Isolate area below active pitch","Remove loose rocks/debris from cliff prior to use","All persons wear helmets cliff-side of safe haven","No-go zone below active pitch enforced during rigging"] },
+            { hazard: "Anchor failure / unsafe rigging", initial_risk: "HIGH", residual_risk: "MEDIUM",
+              controls: ["All anchors on SERENE principles","Screw-gate carabiners checked by Guide before use","Bolted anchors inspected and backed up","Equipment meets AAAS standards"] },
+            { hazard: "Uncontrolled descent (abseiler lets go, descends too fast)", initial_risk: "MEDIUM", residual_risk: "LOW",
+              controls: ["Safety brief on correct technique before activity","Fireman (bottom) belay backup","Appropriate friction control on descender"] },
+            { hazard: "Rope burn, hair caught in hardware, limb trapped", initial_risk: "MEDIUM", residual_risk: "LOW",
+              controls: ["Tie hair back and/or wear hat/beanie","Wear gloves","ABCDE check before descent","Releasable systems preferred"] },
+            { hazard: "Shock, nervousness, anxiety or panic", initial_risk: "MEDIUM", residual_risk: "LOW",
+              controls: ["Hill abseil (low-angle) available for Joeys/younger Cubs to build confidence","Multiple pitch difficulties available","Activity adjusted or participant returned to admin team if needed","No participant forced to continue if uncomfortable"] },
+            { hazard: "Adverse/extreme weather (lightning, strong wind, heavy rain)", initial_risk: "HIGH", residual_risk: "LOW",
+              controls: ["Monitor weather in 48 hours prior — re-inspect site if significant rain","Cancel or postpone if thunderstorm, heavy rain or winds over 39 km/h","Seek shelter immediately if lightning","Move all participants to safe haven and cease all activities if severe weather"] },
+            { hazard: "Pre-existing medical conditions, medications, allergies", initial_risk: "HIGH", residual_risk: "MEDIUM",
+              controls: ["Review medical information from Operoo/activity notification forms","On-site briefing to confirm medications","Multiple first aid qualified leaders on site","Remote first aid kit on site"] },
+            { hazard: "Musculoskeletal injury from manual handling (equipment transport, rigging)", initial_risk: "MEDIUM", residual_risk: "LOW",
+              controls: ["Equipment placed as close to activity area as possible","Team lifts for heavy items","Correct lifting technique — knees bent, back straight, item close to body","Avoid long periods in harness"] }
+          ]
+        },
+        {
+          id: "act-008",
+          title: "Scout Bike Ride — Zoo Pines Mountain Bike Activity",
+          type: "cycling", oas_stage: "1-4", date: "2026-02-24", duration_nights: 0,
+          location: {
+            name: "Zoo Pines, near National Zoo and Aquarium, Canberra", region: "ACT",
+            start_finish: "Scrivener Dam Lookout carpark, Lady Denman Drive",
+            route_experienced: "Sealed bike path across bridge → road crossing near Zoo → easy dirt off-road beside Zoo → through pines → return same way. 6km total.",
+            route_less_experienced: "Sealed bike path along Lady Denman Drive → sealed path to Bicentennial National Trail ford crossing → walk bikes across ford → through pines to carpark. 6km total.",
+            water_feature: "Molonglo Creek ford crossing (less experienced group — walk bikes, leader checks crossability by 1700h)"
+          },
+          supervision: "direct",
+          participants: { youth_count: 35, leader_count: "7-10",
+            grouping: "Split into two groups based on confidence assessed at skills night (Week 3). Min 2 qualified leaders per group plus 2 approved parent helpers." },
+          prerequisite: "Scouts must attend riding skills night (Week 3) to participate — safety requirement, not optional",
+          weather: { season: "summer", temp_range: "10-23°C", sunset: "19:45", wind: "NW 20-30 km/h forecast" },
+          equipment: {
+            group: ["Group first aid kit in Activity Leader's car at carpark","2x UHF radios per group","Basic tools and tyre repair kit/pump"],
+            individual: ["Functional bike (mandatory)","AS2063 certified helmet (mandatory — fitted and checked by leaders)",
+              "Enclosed suitable shoes (mandatory)","BP day pack with min 0.5L water","Personal first aid kit",
+              "Emergency whistle","Rain jacket","Cycle tools and puncture kit (recommended)","Bike lights (leaders mandatory)"]
+          },
+          menu: { meals: "BYO snacks", water_plan: "Min 0.5L per person" },
+          comms: { primary: "Mobile phones (all leaders)", alternate: "UHF radios (2x per group)", emergency: "000" },
+          safe_havens: ["Western corner of zoo fence near Tuggeranong Parkway","Clear area just off Lady Denman Drive"],
+          hospital: "Canberra Private Hospital, 70 Kent St Deakin ACT — 02 6173 3733",
+          cancellation_triggers: ["Lightning storm","Extreme cold (below 2°C daytime)","Rain or heavy rain forecast during ride",
+            "Supervision ratio above 1:20","Insufficient or unserviceable equipment or bikes","Molonglo Creek ford not safely crossable"],
+          leadership: {
+            leader_in_charge: "Mick Thompson — TP Cycling Easy Off Road and On Road",
+            first_aid: "Jarrod Rolfe and Terry Jasch (one per group)"
+          },
+          hazards: [
+            { hazard: "Vehicle accident at road crossing (Lady Denman Drive near Zoo)", initial_risk: "HIGH", residual_risk: "MEDIUM",
+              controls: ["Safety brief before ride","Controlled road crossing point — no one crosses until Leader confirms safe","Route planned to avoid on-road cycling except at crossing points","Helmets on at all times","Leader at front and rear"] },
+            { hazard: "Crash or collision from uneven/slippery surface", initial_risk: "MEDIUM", residual_risk: "LOW",
+              controls: ["Safety brief pre-ride","Helmets and enclosed shoes mandatory","Single file, 2 bike lengths between riders","No racing, no jumps","Slow down and assess obstacles before crossing"] },
+            { hazard: "Mechanical failure causing crash", initial_risk: "MEDIUM", residual_risk: "LOW",
+              controls: ["Brake and tyre check before departure","Leader carries basic tools and tyre repair kit","Control speed","2 bike lengths gap to rider in front"] },
+            { hazard: "Member getting lost", initial_risk: "MEDIUM", residual_risk: "LOW",
+              controls: ["Route briefed before departure","Leader front and rear","Single file group riding","UHF comms between lead and rear leaders","Regular head counts"] },
+            { hazard: "Inadequate skill level or low confidence", initial_risk: "MEDIUM", residual_risk: "LOW",
+              controls: ["Mandatory skills assessment at Week 3 riding night","Split into two groups by confidence level","Less confident group: shorter distance, 50% sealed path","Two qualified leaders per group"] },
+            { hazard: "Reduced visibility / low light (evening activity)", initial_risk: "MEDIUM", residual_risk: "LOW",
+              controls: ["Return to carpark by 19:10, arrive by 19:45","Sunset 19:45 — activity planned to conclude before dark","Leaders carry head torches and bike lights (mandatory)"] },
+            { hazard: "Wildlife distraction (kangaroos, rabbits, birds) causing crash", initial_risk: "LOW", residual_risk: "LOW",
+              controls: ["Brief riders to focus on trail ahead and avoid distractions","Control speed","Single file with 2 bike lengths gap","Adult supervision"] },
+            { hazard: "Child safety / stranger contact (public area)", initial_risk: "MEDIUM", residual_risk: "LOW",
+              controls: ["Safety brief includes stranger awareness","Youth not to talk with strangers without leader or adult present","Buddy system enforced","Two-deep leadership policy at all times"] }
+          ]
+        }
+      ],
+      common_hazards: {
+        description: "Hazards and controls that appear across multiple 1st Jerra activities — use as starting points when building a new risk assessment",
+        hazards: [
+          { id: "h-001", hazard: "Slips, trips, falls", applicable_types: ["hike","camp","paddling","swimming"],
+            standard_controls: ["Activity safety brief pre-departure","Personal first aid kit","Appropriate footwear for activity type","Increased care in known hazardous areas"],
+            notes: "Hike-specific: stay 2 body-lengths from cliff/rock edges. Paddling-specific: enclosed shoes on bank/jetty." },
+          { id: "h-002", hazard: "Lost or separated participant", applicable_types: ["hike","camp"],
+            standard_controls: ["Buddy system","3 whistle blasts — stay put","Regular head counts","PL/APL lead/sweep formation","Map and compass per buddy pair"],
+            notes: "Stage 5 adds: report to shadow party at every track junction." },
+          { id: "h-003", hazard: "Extreme weather (heat, cold, lightning, bushfire)", applicable_types: ["hike","camp","paddling"],
+            standard_controls: ["Check BOM forecast pre-activity","Check Fires Near Me pre-activity","Go/no-go decision at D-1","Safe haven identified pre-departure","Shelter within 5km of lightning","Cancel if extreme fire danger"],
+            notes: "Paddling adds: cancel if winds over 20km/h." },
+          { id: "h-004", hazard: "Sunburn, dehydration, heat illness", applicable_types: ["hike","camp","paddling"],
+            standard_controls: ["Min 1.5L water each (2L for multi-day hikes)","Sunscreen applied regularly, PL checks","Wide-brimmed hat and long-sleeve shirt","Regular water breaks","Shade for rest"],
+            notes: "Multi-day hike: water purifier for stream resupply." },
+          { id: "h-005", hazard: "Pre-existing medical conditions / anaphylaxis", applicable_types: ["hike","camp","paddling","swimming"],
+            standard_controls: ["Confirm all conditions via Operoo/Scout Hub pre-departure","Action plans agreed with parents","EpiPen with participant AND leader","Medications confirmed and supervised"],
+            notes: "Stage 5 (Liam's AJ): no peanuts in patrol food due to nut allergy." },
+          { id: "h-006", hazard: "Dangerous fauna (snakes, ticks, insects)", applicable_types: ["hike","camp"],
+            standard_controls: ["Snake encounter briefing","Snake bite bandage in personal first aid kit","Insect repellent","Long clothing and socks","Tents zipped at all times"],
+            notes: "Stage 5: 2x snake bite bandages per youth, plus leaders carry additional." }
+        ]
+      }
+    };
+
+    /* ══════════════════════════════════════════════════════════════
+       ACTIVITY TYPES — tile config for Screen 2
+    ══════════════════════════════════════════════════════════════ */
+    const ACTIVITY_TYPES = [
+      { id: 'hike',     emoji: '🥾', label: 'Hike',     desc: 'Bush hikes and overnight overnighters on trail', bg: '#dcfce7', border: '#16a34a' },
+      { id: 'camp',     emoji: '⛺', label: 'Camp',     desc: 'Patrol standing camps at established campsites',  bg: '#fef9c3', border: '#ca8a04' },
+      { id: 'paddling', emoji: '🛶', label: 'Paddling', desc: 'Kayaking and canoeing on flat water',              bg: '#dbeafe', border: '#2563eb' },
+      { id: 'cycling',  emoji: '🚴', label: 'Cycling',  desc: 'Mountain bike rides on and off road',             bg: '#ffedd5', border: '#ea580c' },
+      { id: 'vertical', emoji: '🧗', label: 'Vertical', desc: 'Abseiling and rock climbing activities',           bg: '#fce7f3', border: '#db2777' },
+      { id: 'swimming', emoji: '🏊', label: 'Swimming', desc: 'Aquatics skills and pool activities',              bg: '#cffafe', border: '#0891b2' },
+    ];
+
+    /* ══════════════════════════════════════════════════════════════
+       WIZARD — 14 sections with field definitions and tips
+    ══════════════════════════════════════════════════════════════ */
+    const WIZARD_SECTIONS = [
+      {
+        id: 'activityInfo', number: 1, label: 'Activity Info',
+        tip: 'Give your activity a clear name that includes the type and location — leaders reviewing your plan will know at a glance what it covers. OAS Stage tells your leaders what skill level is required.',
+        fields: [
+          { id: 'title',          label: 'Activity title',       type: 'text',     placeholder: 'e.g. OAS Stage 4 Overnight Hike — Kambah Pool to Cotter Bend', required: true },
+          { id: 'oasStage',       label: 'OAS Stage',            type: 'select',   options: ['','1','2','3','4','5','6','1-3','2-4','3-5','4-6','1-6'] },
+          { id: 'date',           label: 'Activity date',        type: 'date',     required: true },
+          { id: 'duration',       label: 'How long is the activity?', type: 'select', options: ['','Day activity (no overnight)','1 night','2 nights','3 nights','4+ nights'] },
+        ]
+      },
+      {
+        id: 'participants', number: 2, label: 'Participants',
+        tip: 'Count only confirmed participants. Leaders must have valid Working With Children clearances. Check Operoo for any medical needs before finalising numbers.',
+        fields: [
+          { id: 'youthCount',        label: 'Number of youth participants',                              type: 'number',   placeholder: '12' },
+          { id: 'leaderCount',       label: 'Number of leaders',                                         type: 'number',   placeholder: '3' },
+          { id: 'minOasStage',       label: 'Minimum OAS Stage required to attend',                      type: 'select',   options: ['','1','2','3','4','5'] },
+          { id: 'participantNotes',  label: 'Special notes (allergies, medical needs, mobility)',         type: 'textarea', placeholder: 'e.g. One participant has a nut allergy — no peanuts in patrol food.' },
+        ]
+      },
+      {
+        id: 'supervision', number: 3, label: 'Supervision',
+        tip: 'Direct supervision means leaders are present at all times. Indirect (used for Stage 5 AJ) means leaders are available nearby but youth operate independently with planned check-ins.',
+        fields: [
+          { id: 'supervisionType', label: 'Supervision type',                   type: 'select', options: ['','Direct','Indirect (shadow party)','Remote'] },
+          { id: 'ratio',           label: 'Target youth-to-leader ratio',        type: 'text',   placeholder: 'e.g. 1:6 desired, 1:8 minimum' },
+          { id: 'ratioTrigger',    label: 'Cancel or modify activity if ratio exceeds', type: 'text', placeholder: 'e.g. 1:8' },
+        ]
+      },
+      {
+        id: 'location', number: 4, label: 'Location',
+        tip: 'Include grid references for your start and finish points. Note the park authority — you may need a permit or to notify them of your visit.',
+        fields: [
+          { id: 'locationName', label: 'Location name',                      type: 'text',   placeholder: 'e.g. Murrumbidgee Corridor / Lower Cotter Catchment' },
+          { id: 'region',       label: 'Region / State',                     type: 'text',   placeholder: 'e.g. ACT' },
+          { id: 'park',         label: 'Park / Land authority',              type: 'text',   placeholder: 'e.g. ACT Parks, Namadgi National Park' },
+          { id: 'startPoint',   label: 'Start point (include grid reference)', type: 'text', placeholder: 'e.g. Kambah Pool Carpark (GR 827810)' },
+          { id: 'finishPoint',  label: 'Finish point (include grid reference)', type: 'text', placeholder: 'e.g. Cotter Bend Carpark (GR 761888)' },
+          { id: 'distanceKm',   label: 'Distance (km) if applicable',        type: 'number', placeholder: '28' },
+          { id: 'terrain',      label: 'Terrain type',                       type: 'select', options: ['','Tracked trail','Untracked / bush','Established campsite','Indoor venue','Flat water','Moving water','Road / sealed path','Mixed'] },
+        ]
+      },
+      {
+        id: 'timing', number: 5, label: 'Timing',
+        tip: 'Your emergency contact must know your overdue time. If you haven\'t checked in by then, they should activate your emergency plan. Plan with a buffer — things always take longer than expected!',
+        fields: [
+          { id: 'leaderArrival',  label: 'Leader arrival time',                            type: 'text', placeholder: 'e.g. 07:30 Saturday 15 Nov' },
+          { id: 'activityStart',  label: 'Activity start time',                            type: 'text', placeholder: 'e.g. 08:00 Saturday 15 Nov' },
+          { id: 'expectedFinish', label: 'Expected finish time',                           type: 'text', placeholder: 'e.g. 14:00 Sunday 16 Nov' },
+          { id: 'overdueTime',    label: 'Overdue time (when to activate emergency plan)',  type: 'text', placeholder: 'e.g. 18:00 Sunday 16 Nov' },
+        ]
+      },
+      {
+        id: 'safety', number: 6, label: 'Safety',
+        tip: 'Think about what could go wrong for YOUR group on THIS activity. Be specific — "falls on steep rocky sections near Booroomba Rocks cliff edge" is more useful than just "falls".',
+        fields: [
+          { id: 'hazards',              label: 'Key hazards (one per line)',            type: 'textarea', placeholder: 'e.g.\nSlips and falls on rocky terrain\nSunburn and dehydration\nDangerous fauna (snakes, ticks)\nExtreme weather (lightning, bushfire)' },
+          { id: 'cancellationTriggers', label: 'Cancellation triggers (one per line)',  type: 'textarea', placeholder: 'e.g.\nSevere adverse weather\nHigh/extreme fire danger\nNP or park closure\nFewer than 5 scouts or 2 leaders' },
+        ]
+      },
+      {
+        id: 'emergencyPlan', number: 7, label: 'Emergency Plan',
+        tip: 'Name a real person as your emergency contact. They should NOT be on the activity. Give them a copy of this plan and your overdue time before you leave.',
+        fields: [
+          { id: 'hospital',          label: 'Nearest hospital and phone number',        type: 'text',     placeholder: 'e.g. Woden Hospital — 02 5124 0000' },
+          { id: 'emergencyContact',  label: 'Emergency contact (name and phone)',        type: 'text',     placeholder: 'e.g. Lauren Rolfe — 0427 649 311' },
+          { id: 'safeHavens',        label: 'Safe havens / evacuation points (one per line)', type: 'textarea', placeholder: 'e.g.\nCotter Reserve Campground (GR 771891)\nHoneysuckle Creek Campground' },
+          { id: 'plb',               label: 'PLB / Garmin InReach / SPOT device details', type: 'text',   placeholder: 'e.g. Garmin InReach (carried by PL and AA Leader)' },
+        ]
+      },
+      {
+        id: 'equipment', number: 8, label: 'Equipment',
+        tip: 'Do a kit check before departure! Group gear is shared across the patrol — mark who carries what for heavy or critical items. All gear must meet AAAS standards for adventurous activities.',
+        fields: [
+          { id: 'groupEquipment',      label: 'Group equipment (one per line)',      type: 'textarea', placeholder: 'e.g.\nUHF radios x4\nMSR water filter\nRemote first aid kit\nGarmin InReach\nSPOT beacon' },
+          { id: 'individualEquipment', label: 'Individual equipment (one per line)', type: 'textarea', placeholder: 'e.g.\nHike pack 50L\nSleeping bag\nWater bottle min 1.5L\nPersonal first aid kit incl. snake bite bandage\nBroad-brimmed hat' },
+          { id: 'equipmentNotes',      label: 'Equipment notes / standards',         type: 'text',     placeholder: 'e.g. All gear must meet AAAS standards. Kit check at 07:30 before departure.' },
+        ]
+      },
+      {
+        id: 'menuWater', number: 9, label: 'Menu & Water',
+        tip: 'Plan a spare meal for each day in case of delays. Water is critical — know exactly where you can resupply. Carry at least 1.5L per person for a day activity, 2L for multi-day hikes.',
+        fields: [
+          { id: 'meals',         label: 'Meals plan',                     type: 'textarea', placeholder: 'e.g.\nDay 1 lunch: BYO\nDay 1 dinner: Pasta with dehydrated mince\nDay 2 breakfast: Cereal with dehydrated milk\nDay 2 lunch: Salami and crackers\nSnacks: Scroggin, jerky' },
+          { id: 'waterPlan',     label: 'Water plan',                     type: 'textarea', placeholder: 'e.g. Min 1.5L each. Patrol water filter for resupply from Murrumbidgee/Cotter Rivers. Potable water at campground.' },
+          { id: 'dietaryNotes',  label: 'Dietary needs / allergies',      type: 'text',     placeholder: 'e.g. No peanuts — nut allergy in patrol. Vegetarian option for 2 participants.' },
+        ]
+      },
+      {
+        id: 'transport', number: 10, label: 'Transport',
+        tip: 'Only licensed, registered, insured vehicles with zero-BAC drivers can carry scouts. Written consent from parents is required via Scout Hub before the activity.',
+        fields: [
+          { id: 'transportMethod', label: 'Transport method',                          type: 'text',     placeholder: 'e.g. Leader vehicles in convoy' },
+          { id: 'driverDetails',   label: 'Driver details (name, contact, vehicle)',   type: 'textarea', placeholder: 'e.g.\nJarrod Rolfe (0413 987 105) — white Prado\nMick Thompson — silver Hilux' },
+          { id: 'consentMethod',   label: 'Consent method',                            type: 'text',     placeholder: 'e.g. Written consent via Scout Hub' },
+          { id: 'pickupPoint',     label: 'Pick-up / loading point',                   type: 'text',     placeholder: 'e.g. 1st Jerra Scout Hall carpark, away from traffic' },
+        ]
+      },
+      {
+        id: 'comms', number: 11, label: 'Comms',
+        tip: 'Always have at least two independent communications methods. UHF radio works well on trail but has limited range — carry a satellite device for remote areas with no mobile coverage.',
+        fields: [
+          { id: 'primaryComms',    label: 'Primary communications',              type: 'text', placeholder: 'e.g. UHF Channel 16' },
+          { id: 'alternateComms',  label: 'Alternate communications',            type: 'text', placeholder: 'e.g. Mobile phones' },
+          { id: 'emergencyComms',  label: 'Emergency comms / PLB',               type: 'text', placeholder: 'e.g. Garmin InReach SOS / SPOT beacon' },
+          { id: 'checkInSchedule', label: 'Check-in schedule',                   type: 'text', placeholder: 'e.g. Report to shadow party at every track junction via UHF' },
+        ]
+      },
+      {
+        id: 'leadership', number: 12, label: 'Leadership',
+        tip: 'Every adventurous activity needs a qualified AA Leader with the right endorsement for this activity type. Check PRO75 for the specific qualifications required.',
+        fields: [
+          { id: 'leaderInCharge',    label: 'Leader in charge (name, role, quals)',       type: 'text',     placeholder: 'e.g. Sparky (Jarrod Rolfe) — SL, First Aid' },
+          { id: 'aaLeader',          label: 'AA Leader (name and qualification)',          type: 'text',     placeholder: 'e.g. Dave Burr — VL, Abseiling Guide, Wilderness First Aid' },
+          { id: 'firstAidOfficer',   label: 'First Aid Officer (name and qual)',           type: 'text',     placeholder: 'e.g. Emma Burr — CSL, First Aid' },
+          { id: 'additionalLeaders', label: 'Additional leaders (name and role per line)', type: 'textarea', placeholder: 'e.g.\nRaptor (Mick Thompson) — TP Cycling\nMagani (Terry Jasch) — SL, First Aid' },
+        ]
+      },
+      {
+        id: 'environment', number: 13, label: 'Environment',
+        tip: 'Check BOM (bom.gov.au) and Fires Near Me at least 48 hours before departure. Set your go/no-go time — usually the evening before so participants can prepare for any changes.',
+        fields: [
+          { id: 'season',         label: 'Season',                         type: 'select',   options: ['','Summer','Autumn','Winter','Spring'] },
+          { id: 'tempRange',      label: 'Expected temperature range',     type: 'text',     placeholder: 'e.g. 9–23°C' },
+          { id: 'weatherNotes',   label: 'Weather notes and forecast',     type: 'textarea', placeholder: 'e.g. Spring — check Fires Near Me pre-departure. BOM forecast: bom.gov.au/places/act/tharwa/' },
+          { id: 'goNoGoTime',     label: 'Go/no-go decision time',         type: 'text',     placeholder: 'e.g. 18:00 the night before (D-1)' },
+          { id: 'specialHazards', label: 'Location-specific hazards (cliff edges, river crossings, etc)', type: 'textarea', placeholder: 'e.g.\nBooroomba Rocks cliff edge — stay 2 body-lengths from edge\nPotential shallow river crossing at GR 766563' },
+        ]
+      },
+      {
+        id: 'review', number: 14, label: 'Review',
+        tip: '🎉 Almost done! Add any final notes, then save your plan. Your leader will review and approve before the activity goes ahead. Great work planning a safe adventure!',
+        fields: [
+          { id: 'additionalNotes', label: 'Any other notes or special instructions', type: 'textarea', placeholder: 'e.g. Nut allergy reminder to all parents. No learner drivers. Drive in convoy.' },
+          { id: 'reviewedBy',      label: 'Plan prepared by',                        type: 'text',     placeholder: 'Your name' },
+          { id: 'leaderApproval',  label: 'To be approved by (leader name)',          type: 'text',     placeholder: 'e.g. Jarrod Rolfe (SL)' },
+        ]
+      },
+    ];
+
+    /* ══════════════════════════════════════════════════════════════
+       UTILITY FUNCTIONS
+    ══════════════════════════════════════════════════════════════ */
+
+    function generateId() {
+      return 'plan-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7);
+    }
+
+    function loadPlans() {
+      try { return JSON.parse(localStorage.getItem('jerra_plans') || '[]'); }
+      catch { return []; }
+    }
+
+    function persistPlans(plans) {
+      localStorage.setItem('jerra_plans', JSON.stringify(plans));
+    }
+
+    function createNewPlan(activityType) {
+      const sections = {};
+      WIZARD_SECTIONS.forEach(s => { sections[s.id] = {}; });
+      return {
+        id: generateId(),
+        activityType,
+        title: '',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        sections,
+        completedSections: [],
+        percentComplete: 0,
+      };
+    }
+
+    function computePercent(plan) {
+      return Math.round((plan.completedSections.length / WIZARD_SECTIONS.length) * 100);
+    }
+
+    function activityEmoji(type) {
+      return ACTIVITY_TYPES.find(a => a.id === type)?.emoji || '📋';
+    }
+
+    function formatDate(iso) {
+      if (!iso) return '';
+      try {
+        // Handle both YYYY-MM-DD and full ISO strings
+        const d = new Date(iso.includes('T') ? iso : iso + 'T12:00:00');
+        return d.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
+      } catch { return iso; }
+    }
+
+    function riskColour(risk) {
+      if (!risk) return 'bg-gray-200 text-gray-600';
+      const r = risk.toUpperCase();
+      if (r === 'LOW')    return 'bg-green-100 text-green-700';
+      if (r === 'MEDIUM' || r === 'MODERATE') return 'bg-yellow-100 text-yellow-700';
+      return 'bg-red-100 text-red-700';
+    }
+
+    /* ══════════════════════════════════════════════════════════════
+       HEADER
+    ══════════════════════════════════════════════════════════════ */
+    function Header({ screen, onNavigate, currentPlan }) {
+      const pct = currentPlan?.percentComplete ?? 0;
+      return (
+        <header className="hdr-gradient text-white shadow-lg sticky top-0 z-40">
+          <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+            {/* Logo / back */}
+            <div className="flex items-center gap-3 min-w-0">
+              {screen !== 'dashboard' && (
+                <button
+                  onClick={() => onNavigate('dashboard')}
+                  className="text-white/70 hover:text-white text-lg leading-none flex-shrink-0"
+                  aria-label="Home"
+                >←</button>
+              )}
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xl" aria-hidden>⚜️</span>
+                  <span className="font-bold text-base sm:text-lg leading-tight truncate">
+                    1st Jerra Scout Planner
+                  </span>
+                </div>
+                <div className="text-xs text-purple-300 hidden sm:block">Activity Planning Tool</div>
+              </div>
+            </div>
+
+            {/* Nav buttons */}
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              {screen !== 'library' && (
+                <button onClick={() => onNavigate('library')}
+                  className="text-xs bg-white/10 hover:bg-white/25 px-2.5 py-1.5 rounded-full transition-colors">
+                  📚 Library
+                </button>
+              )}
+              {screen !== 'dashboard' && (
+                <button onClick={() => onNavigate('dashboard')}
+                  className="text-xs bg-white/10 hover:bg-white/25 px-2.5 py-1.5 rounded-full transition-colors">
+                  🏠 Home
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Wizard progress strip */}
+          {screen === 'wizard' && currentPlan && (
+            <div className="border-t border-white/10 px-4 py-1.5">
+              <div className="max-w-4xl mx-auto flex items-center gap-3">
+                <span className="text-xs text-purple-200 flex-shrink-0 w-20 text-right">{pct}% done</span>
+                <div className="flex-1 bg-white/20 rounded-full h-1.5">
+                  <div className="bg-brand-gold h-1.5 rounded-full pbar" style={{ width: `${pct}%` }} />
+                </div>
+                <span className="text-xs text-purple-200 flex-shrink-0">
+                  {currentPlan.completedSections.length}/{WIZARD_SECTIONS.length} sections
+                </span>
+              </div>
+            </div>
+          )}
+        </header>
+      );
+    }
+
+    /* ══════════════════════════════════════════════════════════════
+       SCREEN 1 — DASHBOARD
+    ══════════════════════════════════════════════════════════════ */
+    function Dashboard({ plans, onNavigate, onSelectPlan }) {
+      const sorted = [...plans].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+
+      return (
+        <div className="max-w-4xl mx-auto px-4 py-6">
+          {/* Hero banner */}
+          <div className="hdr-gradient rounded-2xl p-6 mb-6 text-white shadow-lg">
+            <h1 className="text-2xl font-bold mb-1">G'day, Scout! 👋</h1>
+            <p className="text-purple-200 text-sm leading-relaxed">
+              Plan your next adventure safely. Fill in all 14 sections to get your plan ready
+              for leader approval. The Activity Library has real plans from 1st Jerra to inspire you.
+            </p>
+          </div>
+
+          {/* CTA buttons */}
+          <div className="grid grid-cols-2 gap-3 mb-8">
+            <button
+              onClick={() => onNavigate('newPlan')}
+              className="gold-gradient text-black font-bold py-3 px-4 rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2"
+            >
+              <span className="text-xl">+</span> New Plan
+            </button>
+            <button
+              onClick={() => onNavigate('library')}
+              className="bg-white border-2 text-brand-purple font-bold py-3 px-4 rounded-xl shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-2"
+              style={{ borderColor: '#6B2D8B', color: '#6B2D8B' }}
+            >
+              📚 Activity Library
+            </button>
+          </div>
+
+          {/* Plans list */}
+          <h2 className="text-lg font-bold text-gray-800 mb-3">
+            Your Plans
+            <span className="ml-2 text-sm font-normal text-gray-400">({plans.length})</span>
+          </h2>
+
+          {plans.length === 0 ? (
+            /* Empty state */
+            <div className="bg-white rounded-2xl p-10 text-center shadow-sm border border-gray-200">
+              <div className="text-6xl mb-4">🗺️</div>
+              <h3 className="text-xl font-bold text-gray-700 mb-2">No plans yet!</h3>
+              <p className="text-gray-500 text-sm mb-5 max-w-xs mx-auto">
+                Start your first activity plan. Your leaders will be impressed with your preparation!
+              </p>
+              <button
+                onClick={() => onNavigate('newPlan')}
+                className="gold-gradient text-black font-bold py-2.5 px-6 rounded-xl transition-all"
+              >
+                Plan my first adventure →
+              </button>
+            </div>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {sorted.map(plan => (
+                <PlanCard key={plan.id} plan={plan} onClick={() => onSelectPlan(plan)} />
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    function PlanCard({ plan, onClick }) {
+      const pct = plan.percentComplete || 0;
+      const date = plan.sections?.activityInfo?.date;
+      return (
+        <button
+          onClick={onClick}
+          className="bg-white rounded-2xl p-4 shadow-sm border border-gray-200 hover:border-purple-400 hover:shadow-md transition-all text-left w-full group"
+        >
+          <div className="flex gap-3 items-start">
+            <div className="text-3xl mt-0.5">{activityEmoji(plan.activityType)}</div>
+            <div className="flex-1 min-w-0">
+              <div className="font-bold text-gray-800 truncate group-hover:text-purple-700 transition-colors">
+                {plan.title || 'Untitled Plan'}
+              </div>
+              <div className="text-xs text-gray-400 mt-0.5">
+                {plan.activityType}
+                {date ? ' • ' + formatDate(date) : ''}
+                {' • updated '}{formatDate(plan.updatedAt)}
+              </div>
+              {/* Progress bar */}
+              <div className="flex items-center gap-2 mt-2">
+                <div className="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden">
+                  <div
+                    className="h-2 rounded-full pbar"
+                    style={{
+                      width: `${pct}%`,
+                      backgroundColor: pct === 100 ? '#2D6A2D' : '#F5A800'
+                    }}
+                  />
+                </div>
+                <span className="text-xs font-bold" style={{ color: pct === 100 ? '#2D6A2D' : '#666' }}>
+                  {pct}%
+                </span>
+              </div>
+              <div className="text-xs text-gray-400 mt-1">
+                {plan.completedSections.length} / {WIZARD_SECTIONS.length} sections complete
+              </div>
+            </div>
+          </div>
+        </button>
+      );
+    }
+
+    /* ══════════════════════════════════════════════════════════════
+       SCREEN 2 — NEW PLAN / ACTIVITY SELECTOR
+    ══════════════════════════════════════════════════════════════ */
+    function NewPlan({ onSelectType }) {
+      return (
+        <div className="max-w-4xl mx-auto px-4 py-6">
+          <h1 className="text-2xl font-bold text-gray-800 mb-1">Choose Activity Type</h1>
+          <p className="text-gray-500 mb-6 text-sm">
+            What kind of adventure are you planning? We'll tailor the questions for you.
+          </p>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            {ACTIVITY_TYPES.map(type => (
+              <button
+                key={type.id}
+                onClick={() => onSelectType(type.id)}
+                className="rounded-2xl p-5 text-left border-2 hover:scale-105 hover:shadow-xl transition-all active:scale-100"
+                style={{ backgroundColor: type.bg, borderColor: type.border }}
+              >
+                <div className="text-4xl mb-3">{type.emoji}</div>
+                <div className="font-bold text-gray-800 text-lg">{type.label}</div>
+                <div className="text-xs text-gray-600 mt-1 leading-relaxed">{type.desc}</div>
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-6 bg-purple-50 border border-purple-200 rounded-xl p-4 text-sm text-purple-800">
+            <strong>💡 Tip:</strong> Check the Activity Library first — you might find a similar past activity
+            to use as a template and save heaps of time!
+          </div>
+        </div>
+      );
+    }
+
+    /* ══════════════════════════════════════════════════════════════
+       SCREEN 3 — GUIDED WIZARD  (14 sections × N questions)
+    ══════════════════════════════════════════════════════════════ */
+    function Wizard({ plan, onUpdatePlan, onNavigate }) {
+      // Start at the first incomplete section (so resuming works)
+      const firstIncomplete = WIZARD_SECTIONS.findIndex(s => !plan.completedSections.includes(s.id));
+      const [secIdx, setSecIdx] = useState(firstIncomplete === -1 ? 0 : firstIncomplete);
+      const [qIdx,   setQIdx]   = useState(0);
+
+      // Local copy of sections so we don't write to parent on every keystroke
+      const [localSections, setLocalSections] = useState(() =>
+        JSON.parse(JSON.stringify(plan.sections))
+      );
+
+      const section       = WIZARD_SECTIONS[secIdx];
+      const question      = section.fields[qIdx];
+      const isLastQ       = qIdx   === section.fields.length - 1;
+      const isLastSection = secIdx === WIZARD_SECTIONS.length - 1;
+
+      const currentValue = localSections[section.id]?.[question.id] ?? '';
+
+      function setValue(val) {
+        setLocalSections(prev => ({
+          ...prev,
+          [section.id]: { ...prev[section.id], [question.id]: val }
+        }));
+      }
+
+      // Flush local data + mark section complete → propagate to parent
+      function flushAndAdvance() {
+        const nowComplete = [...new Set([...plan.completedSections, section.id])];
+        const updated = {
+          ...plan,
+          sections: localSections,
+          completedSections: nowComplete,
+          title: localSections.activityInfo?.title || plan.title || 'Untitled Plan',
+          updatedAt: new Date().toISOString(),
+        };
+        updated.percentComplete = computePercent(updated);
+        onUpdatePlan(updated);
+        return updated;
+      }
+
+      // Just flush without marking section complete (e.g. sidebar nav)
+      function flushSilent() {
+        const updated = {
+          ...plan,
+          sections: localSections,
+          title: localSections.activityInfo?.title || plan.title || 'Untitled Plan',
+          updatedAt: new Date().toISOString(),
+        };
+        updated.percentComplete = computePercent(updated);
+        onUpdatePlan(updated);
+      }
+
+      function goNext() {
+        if (!isLastQ) {
+          setQIdx(q => q + 1);
+        } else {
+          flushAndAdvance();
+          if (isLastSection) {
+            onNavigate('planDetail');
+          } else {
+            setSecIdx(s => s + 1);
+            setQIdx(0);
+          }
+        }
+      }
+
+      function goBack() {
+        if (qIdx > 0) {
+          setQIdx(q => q - 1);
+        } else if (secIdx > 0) {
+          flushSilent();
+          setSecIdx(s => s - 1);
+          setQIdx(WIZARD_SECTIONS[secIdx - 1].fields.length - 1);
+        }
+      }
+
+      function jumpToSection(i) {
+        flushSilent();
+        setSecIdx(i);
+        setQIdx(0);
+      }
+
+      return (
+        <div className="max-w-4xl mx-auto px-4 py-4">
+          <div className="flex gap-4 items-start">
+
+            {/* ── Sidebar (desktop) ── */}
+            <aside className="hidden md:block w-48 flex-shrink-0">
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-3 sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2 px-1">Sections</p>
+                {WIZARD_SECTIONS.map((s, i) => {
+                  const done    = plan.completedSections.includes(s.id);
+                  const current = i === secIdx;
+                  return (
+                    <button
+                      key={s.id}
+                      onClick={() => jumpToSection(i)}
+                      className={`w-full text-left px-2 py-1.5 rounded-lg mb-0.5 flex items-center gap-2 transition-all text-xs
+                        ${current ? 'text-white font-bold' : done ? 'text-green-700 hover:bg-green-50' : 'text-gray-500 hover:bg-gray-50'}`}
+                      style={current ? { backgroundColor: '#6B2D8B' } : {}}
+                    >
+                      <span
+                        className={`w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold
+                          ${current ? 'bg-white' : done ? 'text-white' : 'bg-gray-200 text-gray-500'}`}
+                        style={current ? { color: '#6B2D8B' } : done ? { backgroundColor: '#2D6A2D' } : {}}
+                      >
+                        {done && !current ? '✓' : s.number}
+                      </span>
+                      <span className="leading-tight">{s.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </aside>
+
+            {/* ── Main content ── */}
+            <div className="flex-1 min-w-0 fade-in">
+
+              {/* Section heading row */}
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 mb-4">
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                  <span className="text-xs font-bold text-white px-2 py-0.5 rounded-full" style={{ backgroundColor: '#6B2D8B' }}>
+                    Section {section.number} of {WIZARD_SECTIONS.length}
+                  </span>
+                  <span className="text-xs text-gray-400">
+                    Question {qIdx + 1} of {section.fields.length}
+                  </span>
+                  <span className="ml-auto text-xl">{activityEmoji(plan.activityType)}</span>
+                </div>
+                <h2 className="text-xl font-bold text-gray-800">{section.label}</h2>
+
+                {/* Mobile dot-nav for sections */}
+                <div className="md:hidden mt-3 flex flex-wrap gap-1">
+                  {WIZARD_SECTIONS.map((s, i) => {
+                    const done    = plan.completedSections.includes(s.id);
+                    const current = i === secIdx;
+                    return (
+                      <button
+                        key={s.id}
+                        onClick={() => jumpToSection(i)}
+                        className="w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center transition-all"
+                        style={{
+                          backgroundColor: current ? '#6B2D8B' : done ? '#2D6A2D' : '#e5e7eb',
+                          color: (current || done) ? 'white' : '#6b7280'
+                        }}
+                      >
+                        {done && !current ? '✓' : s.number}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Question card + tip panel */}
+              <div className="flex gap-4 flex-col lg:flex-row">
+
+                {/* Question card */}
+                <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 p-5 fade-in" key={`${secIdx}-${qIdx}`}>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    {question.label}
+                    {question.required && <span className="text-red-500 ml-1">*</span>}
+                  </label>
+
+                  {question.type === 'textarea' ? (
+                    <textarea
+                      value={currentValue}
+                      onChange={e => setValue(e.target.value)}
+                      placeholder={question.placeholder}
+                      rows={5}
+                      className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 resize-none"
+                      style={{ focusRingColor: '#6B2D8B' }}
+                      onFocus={e => e.target.style.borderColor = '#6B2D8B'}
+                      onBlur={e => e.target.style.borderColor = '#d1d5db'}
+                    />
+                  ) : question.type === 'select' ? (
+                    <select
+                      value={currentValue}
+                      onChange={e => setValue(e.target.value)}
+                      className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 bg-white"
+                      onFocus={e => e.target.style.borderColor = '#6B2D8B'}
+                      onBlur={e => e.target.style.borderColor = '#d1d5db'}
+                    >
+                      {question.options.map(opt => (
+                        <option key={opt} value={opt}>{opt || '— Select —'}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type={question.type}
+                      value={currentValue}
+                      onChange={e => setValue(e.target.value)}
+                      placeholder={question.placeholder}
+                      onKeyDown={e => e.key === 'Enter' && !e.shiftKey && goNext()}
+                      className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2"
+                      onFocus={e => e.target.style.borderColor = '#6B2D8B'}
+                      onBlur={e => e.target.style.borderColor = '#d1d5db'}
+                    />
+                  )}
+
+                  {/* In-section dot progress + nav */}
+                  <div className="flex items-center justify-between mt-5 gap-3">
+                    <button
+                      onClick={goBack}
+                      disabled={secIdx === 0 && qIdx === 0}
+                      className="px-4 py-2 text-sm border border-gray-300 rounded-xl hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    >
+                      ← Back
+                    </button>
+
+                    {/* Dots for questions in this section */}
+                    <div className="flex gap-1.5 items-center">
+                      {section.fields.map((_, i) => (
+                        <div
+                          key={i}
+                          className="rounded-full transition-all"
+                          style={{
+                            width:  i === qIdx ? '8px' : '6px',
+                            height: i === qIdx ? '8px' : '6px',
+                            backgroundColor: i < qIdx ? '#2D6A2D' : i === qIdx ? '#6B2D8B' : '#d1d5db'
+                          }}
+                        />
+                      ))}
+                    </div>
+
+                    <button
+                      onClick={goNext}
+                      className="px-4 py-2 text-sm font-bold rounded-xl text-white transition-colors"
+                      style={{ backgroundColor: isLastQ ? (isLastSection ? '#2D6A2D' : '#2D6A2D') : '#6B2D8B' }}
+                    >
+                      {isLastQ
+                        ? (isLastSection ? '✓ Finish Plan' : 'Save & Continue →')
+                        : 'Next →'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Tip panel */}
+                <aside className="lg:w-60 xl:w-64 tip-gradient text-white rounded-2xl p-4 self-start">
+                  <p className="font-bold text-sm mb-2 flex items-center gap-1.5">
+                    <span>💡</span> Planner Tip
+                  </p>
+                  <p className="text-purple-100 text-xs leading-relaxed">{section.tip}</p>
+                  <div className="mt-4 bg-white/10 rounded-xl p-3">
+                    <p className="text-xs text-purple-200 mb-1">Your activity</p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl">{activityEmoji(plan.activityType)}</span>
+                      <span className="font-bold capitalize text-sm">{plan.activityType}</span>
+                    </div>
+                  </div>
+                </aside>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    /* ══════════════════════════════════════════════════════════════
+       SCREEN 4 — ACTIVITY LIBRARY
+    ══════════════════════════════════════════════════════════════ */
+    function Library({ onUseTemplate }) {
+      const [filter,   setFilter]   = useState('all');
+      const [selected, setSelected] = useState(null);
+
+      const activities = LIBRARY_DATA.activities;
+      const types      = [...new Set(activities.map(a => a.type))];
+      const filtered   = filter === 'all' ? activities : activities.filter(a => a.type === filter);
+
+      return (
+        <div className="max-w-4xl mx-auto px-4 py-6">
+          <h1 className="text-2xl font-bold text-gray-800 mb-1">Activity Library</h1>
+          <p className="text-gray-500 text-sm mb-5">
+            Real past activities from 1st Jerra — browse for inspiration or click "Use as Template" to pre-fill a new plan.
+          </p>
+
+          {/* Filter chips */}
+          <div className="flex gap-2 flex-wrap mb-5">
+            {['all', ...types].map(t => (
+              <button
+                key={t}
+                onClick={() => setFilter(t)}
+                className="px-3 py-1.5 rounded-full text-sm font-medium transition-colors border"
+                style={filter === t
+                  ? { backgroundColor: '#6B2D8B', color: 'white', borderColor: '#6B2D8B' }
+                  : { backgroundColor: 'white', color: '#374151', borderColor: '#d1d5db' }
+                }
+              >
+                {t === 'all' ? 'All activities' : `${activityEmoji(t)} ${t.charAt(0).toUpperCase() + t.slice(1)}`}
+              </button>
+            ))}
+          </div>
+
+          {/* Activity grid */}
+          <div className="grid gap-3 sm:grid-cols-2">
+            {filtered.map(act => (
+              <button
+                key={act.id}
+                onClick={() => setSelected(act)}
+                className="bg-white rounded-2xl p-4 shadow-sm border border-gray-200 hover:border-purple-400 hover:shadow-md transition-all text-left"
+              >
+                <div className="flex gap-3 items-start">
+                  <div className="text-3xl">{activityEmoji(act.type)}</div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-gray-800 text-sm leading-tight">{act.title}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {act.location?.name} {act.location?.region ? `• ${act.location.region}` : ''}
+                    </p>
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      <Chip>{act.type}</Chip>
+                      {act.oas_stage && <Chip>OAS {act.oas_stage}</Chip>}
+                      {act.location?.distance_km && <Chip>{act.location.distance_km} km</Chip>}
+                      <Chip>{(act.hazards || []).length} hazards</Chip>
+                    </div>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+
+          {/* Detail modal */}
+          {selected && (
+            <LibraryModal
+              activity={selected}
+              onClose={() => setSelected(null)}
+              onUseTemplate={() => { onUseTemplate(selected); setSelected(null); }}
+            />
+          )}
+        </div>
+      );
+    }
+
+    function Chip({ children }) {
+      return (
+        <span className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full">{children}</span>
+      );
+    }
+
+    function LibraryModal({ activity, onClose, onUseTemplate }) {
+      return (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4"
+          onClick={onClose}
+        >
+          <div
+            className="bg-white w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl shadow-2xl modal-scroll overflow-y-auto max-h-[92vh] sm:max-h-[85vh]"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Modal header */}
+            <div className="sticky top-0 bg-white border-b border-gray-100 px-5 py-4 flex items-start gap-3 rounded-t-2xl">
+              <div className="text-3xl mt-0.5">{activityEmoji(activity.type)}</div>
+              <div className="flex-1 min-w-0">
+                <div className="flex gap-1.5 mb-1 flex-wrap">
+                  <Chip>{activity.type}</Chip>
+                  {activity.oas_stage && <Chip>OAS {activity.oas_stage}</Chip>}
+                  {activity.duration_nights === 0 ? <Chip>Day activity</Chip>
+                    : activity.duration_nights ? <Chip>{activity.duration_nights} night{activity.duration_nights > 1 ? 's' : ''}</Chip>
+                    : null}
+                </div>
+                <h2 className="font-bold text-gray-800 text-sm leading-snug">{activity.title}</h2>
+              </div>
+              <button onClick={onClose} className="text-gray-400 hover:text-gray-700 text-lg ml-1">✕</button>
+            </div>
+
+            <div className="p-5 space-y-4 text-sm">
+              {/* Location */}
+              <Section title="Location">
+                <p className="text-gray-700">{activity.location?.name}</p>
+                {activity.location?.park && <p className="text-gray-400 text-xs">{activity.location.park} • {activity.location.region}</p>}
+                {activity.location?.distance_km && <p className="text-gray-400 text-xs">{activity.location.distance_km} km • {activity.location.terrain}</p>}
+                {activity.location?.start_point && <p className="text-gray-400 text-xs">Start: {activity.location.start_point}</p>}
+                {activity.location?.finish_point && <p className="text-gray-400 text-xs">Finish: {activity.location.finish_point}</p>}
+              </Section>
+
+              {/* Participants */}
+              {activity.participants && (
+                <Section title="Participants">
+                  <p className="text-gray-700">
+                    {activity.participants.youth_count ? `${activity.participants.youth_count} youth` : ''}
+                    {activity.participants.leader_count ? ` • ${activity.participants.leader_count} leaders` : ''}
+                    {activity.participants.min_oas_stage ? ` • Min OAS Stage ${activity.participants.min_oas_stage}` : ''}
+                  </p>
+                </Section>
+              )}
+
+              {/* Hazards */}
+              {activity.hazards?.length > 0 && (
+                <Section title={`Hazards (${activity.hazards.length})`}>
+                  <div className="space-y-1.5">
+                    {activity.hazards.map((h, i) => (
+                      <div key={i} className="flex items-start gap-2">
+                        <span className={`mt-0.5 px-1.5 py-0.5 rounded text-xs font-bold flex-shrink-0 ${riskColour(h.residual_risk)}`}>
+                          {h.residual_risk || '?'}
+                        </span>
+                        <span className="text-gray-700 text-xs">{h.hazard}</span>
+                      </div>
+                    ))}
+                  </div>
+                </Section>
+              )}
+
+              {/* Equipment snippet */}
+              {activity.equipment?.group && (
+                <Section title="Group Equipment">
+                  <p className="text-gray-600 text-xs">
+                    {activity.equipment.group.join(' • ')}
+                  </p>
+                </Section>
+              )}
+
+              {/* Menu */}
+              {activity.menu?.meals && (
+                <Section title="Menu">
+                  <p className="text-gray-600 text-xs">{activity.menu.meals}</p>
+                  {activity.menu.water_plan && <p className="text-gray-500 text-xs mt-1">{activity.menu.water_plan}</p>}
+                </Section>
+              )}
+
+              {/* Comms */}
+              {activity.comms && (
+                <Section title="Comms">
+                  <p className="text-gray-600 text-xs">Primary: {activity.comms.primary}</p>
+                  {activity.comms.emergency && <p className="text-gray-600 text-xs">Emergency: {activity.comms.emergency}</p>}
+                </Section>
+              )}
+
+              {/* Special notes */}
+              {activity.special_notes && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 text-xs text-yellow-800">
+                  ⚠️ {activity.special_notes}
+                </div>
+              )}
+            </div>
+
+            {/* CTA */}
+            <div className="sticky bottom-0 bg-white border-t border-gray-100 px-5 py-4">
+              <button
+                onClick={onUseTemplate}
+                className="w-full gold-gradient text-black font-bold py-3 rounded-xl transition-all hover:shadow-md"
+              >
+                Use as Template →
+              </button>
+              <p className="text-center text-xs text-gray-400 mt-2">
+                Pre-fills location, hazards, equipment, menu and comms
+              </p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    /* Small modal section heading helper */
+    function Section({ title, children }) {
+      return (
+        <div>
+          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">{title}</h3>
+          {children}
+        </div>
+      );
+    }
+
+    /* ══════════════════════════════════════════════════════════════
+       SCREEN 5 — PLAN DETAIL / DOCUMENT PREVIEW
+    ══════════════════════════════════════════════════════════════ */
+    function PlanDetail({ plan, onContinuePlanning }) {
+      if (!plan) return null;
+      const pct = plan.percentComplete || 0;
+
+      return (
+        <div className="max-w-4xl mx-auto px-4 py-6">
+          {/* Header card */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 mb-5">
+            <div className="flex gap-3 items-start mb-4">
+              <div className="text-4xl">{activityEmoji(plan.activityType)}</div>
+              <div className="flex-1 min-w-0">
+                <h1 className="text-xl font-bold text-gray-800 leading-tight">
+                  {plan.title || 'Untitled Plan'}
+                </h1>
+                <p className="text-sm text-gray-400 mt-0.5 capitalize">
+                  {plan.activityType} · Created {formatDate(plan.createdAt)}
+                </p>
+                {/* Progress */}
+                <div className="flex items-center gap-2 mt-2">
+                  <div className="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden">
+                    <div
+                      className="h-2 rounded-full pbar"
+                      style={{ width: `${pct}%`, backgroundColor: pct === 100 ? '#2D6A2D' : '#F5A800' }}
+                    />
+                  </div>
+                  <span className="text-sm font-bold" style={{ color: pct === 100 ? '#2D6A2D' : '#555' }}>
+                    {pct}%
+                  </span>
+                </div>
+                <p className="text-xs text-gray-400 mt-1">
+                  {plan.completedSections.length} of {WIZARD_SECTIONS.length} sections complete
+                  {pct === 100 && ' 🎉 Ready for review!'}
+                </p>
+              </div>
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={onContinuePlanning}
+                className="flex-1 min-w-28 font-bold py-2.5 px-4 rounded-xl text-white text-sm transition-all hover:opacity-90"
+                style={{ backgroundColor: '#6B2D8B' }}
+              >
+                {pct === 100 ? '✏️ Edit Plan' : '→ Continue Planning'}
+              </button>
+              <button
+                onClick={() => alert('📄 PDF download is coming soon!\n\nYour leader will be able to print the plan from Scout Hub once it\'s submitted for approval.')}
+                className="flex-1 min-w-28 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2.5 px-4 rounded-xl text-sm transition-colors"
+              >
+                📄 Download PDF
+              </button>
+              <a
+                href="mailto:feedback@1stjerra.com.au?subject=Scout Planner Feedback"
+                className="flex-1 min-w-28 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2.5 px-4 rounded-xl text-sm transition-colors text-center"
+              >
+                ✉️ Send Feedback
+              </a>
+            </div>
+          </div>
+
+          {/* Section cards grid */}
+          <h2 className="text-base font-bold text-gray-700 mb-3">Plan Sections</h2>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {WIZARD_SECTIONS.map(section => {
+              const done  = plan.completedSections.includes(section.id);
+              const data  = plan.sections?.[section.id] || {};
+              // Grab first two populated fields as preview lines
+              const preview = Object.entries(data)
+                .filter(([, v]) => v && String(v).trim())
+                .slice(0, 2);
+
+              return (
+                <div
+                  key={section.id}
+                  className="bg-white rounded-2xl p-4 shadow-sm border transition-colors"
+                  style={{ borderColor: done ? '#86efac' : '#e5e7eb' }}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <span
+                      className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+                      style={{
+                        backgroundColor: done ? '#2D6A2D' : '#e5e7eb',
+                        color: done ? 'white' : '#6b7280'
+                      }}
+                    >
+                      {done ? '✓' : section.number}
+                    </span>
+                    <span className={`font-bold text-sm ${done ? 'text-gray-800' : 'text-gray-400'}`}>
+                      {section.label}
+                    </span>
+                  </div>
+
+                  {preview.length > 0 ? (
+                    <div className="space-y-1">
+                      {preview.map(([k, v]) => (
+                        <p key={k} className="text-xs text-gray-500 truncate">
+                          <span className="text-gray-400 capitalize">
+                            {k.replace(/([A-Z])/g, ' $1').toLowerCase()}:{' '}
+                          </span>
+                          {String(v).split('\n')[0].substring(0, 80)}
+                          {String(v).length > 80 ? '…' : ''}
+                        </p>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-gray-300 italic">Not completed yet</p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    /* ══════════════════════════════════════════════════════════════
+       ROOT APP  — state + routing
+    ══════════════════════════════════════════════════════════════ */
+    function App() {
+      const [screen,      setScreen]      = useState('dashboard');
+      const [plans,       setPlans]       = useState(() => loadPlans());
+      const [currentPlan, setCurrentPlan] = useState(null);
+
+      // Keep localStorage in sync whenever plans change
+      useEffect(() => { persistPlans(plans); }, [plans]);
+
+      // Upsert a plan into the plans array and set it as current
+      const upsertPlan = useCallback(updated => {
+        setPlans(prev => {
+          const idx = prev.findIndex(p => p.id === updated.id);
+          const next = [...prev];
+          if (idx >= 0) next[idx] = updated; else next.push(updated);
+          return next;
+        });
+        setCurrentPlan(updated);
+      }, []);
+
+      // Screen 2 → select activity type → create plan → wizard
+      function handleSelectType(type) {
+        const plan = createNewPlan(type);
+        setCurrentPlan(plan);
+        setScreen('wizard');
+      }
+
+      // Library "Use as Template" → pre-fill new plan from library activity
+      function handleUseTemplate(act) {
+        const plan = createNewPlan(act.type);
+        plan.title = act.title;
+
+        // Pre-fill sections from the library activity's data
+        plan.sections.activityInfo = {
+          title:    act.title,
+          oasStage: String(act.oas_stage || ''),
+          duration: act.duration_nights === 0 ? 'Day activity (no overnight)'
+                  : act.duration_nights    ? `${act.duration_nights} night${act.duration_nights > 1 ? 's' : ''}`
+                  : '',
+        };
+        plan.sections.location = {
+          locationName: act.location?.name      || '',
+          region:       act.location?.region    || '',
+          park:         act.location?.park      || '',
+          startPoint:   act.location?.start_point  || '',
+          finishPoint:  act.location?.finish_point || '',
+          distanceKm:   String(act.location?.distance_km || ''),
+          terrain:      act.location?.terrain   || '',
+        };
+        plan.sections.safety = {
+          hazards:              (act.hazards || []).map(h => h.hazard).join('\n'),
+          cancellationTriggers: (act.cancellation_triggers || []).join('\n'),
+        };
+        plan.sections.equipment = {
+          groupEquipment:      (act.equipment?.group      || []).join('\n'),
+          individualEquipment: (act.equipment?.individual || []).join('\n'),
+        };
+        plan.sections.menuWater = {
+          meals:        act.menu?.meals      || '',
+          waterPlan:    act.menu?.water_plan || '',
+        };
+        plan.sections.comms = {
+          primaryComms:   act.comms?.primary   || '',
+          alternateComms: act.comms?.alternate || '',
+          emergencyComms: act.comms?.emergency || '',
+        };
+        plan.sections.emergencyPlan = {
+          hospital:         act.hospital     || '',
+          safeHavens:       (act.safe_havens || []).join('\n'),
+          overdueTime:      act.overdue_time || '',
+        };
+        plan.sections.environment = {
+          season:   act.weather?.season
+            ? act.weather.season.charAt(0).toUpperCase() + act.weather.season.slice(1)
+            : '',
+          tempRange: act.weather?.temp_range || '',
+        };
+        if (act.participants) {
+          plan.sections.participants = {
+            youthCount:   String(act.participants.youth_count  || ''),
+            leaderCount:  String(act.participants.leader_count || ''),
+            minOasStage:  String(act.participants.min_oas_stage || ''),
+          };
+        }
+        if (act.comms?.primary) {
+          plan.sections.supervision = {
+            supervisionType: act.supervision
+              ? act.supervision.charAt(0).toUpperCase() + act.supervision.slice(1)
+              : '',
+          };
+        }
+        if (act.leadership) {
+          plan.sections.leadership = {
+            leaderInCharge: act.leadership.leader_in_charge || act.leadership.aa_leader || '',
+            aaLeader:       act.leadership.aa_leader || '',
+            firstAidOfficer: act.leadership.first_aid || '',
+          };
+        }
+
+        plan.percentComplete = computePercent(plan);
+        upsertPlan(plan);
+        setScreen('wizard');
+      }
+
+      const navigate = dest => setScreen(dest);
+
+      return (
+        <div className="min-h-screen bg-gray-100">
+          <Header screen={screen} onNavigate={navigate} currentPlan={currentPlan} />
+
+          <main className="pb-12">
+            {screen === 'dashboard' && (
+              <Dashboard
+                plans={plans}
+                onNavigate={navigate}
+                onSelectPlan={plan => { setCurrentPlan(plan); navigate('planDetail'); }}
+              />
+            )}
+
+            {screen === 'newPlan' && (
+              <NewPlan onSelectType={handleSelectType} />
+            )}
+
+            {screen === 'wizard' && currentPlan && (
+              <Wizard
+                plan={currentPlan}
+                onUpdatePlan={upsertPlan}
+                onNavigate={navigate}
+              />
+            )}
+
+            {screen === 'library' && (
+              <Library onUseTemplate={handleUseTemplate} />
+            )}
+
+            {screen === 'planDetail' && currentPlan && (
+              <PlanDetail
+                plan={currentPlan}
+                onContinuePlanning={() => navigate('wizard')}
+              />
+            )}
+          </main>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
