@@ -545,6 +545,119 @@ const ZONE_KEYWORDS = {
   "In the Water":["drown","near-drown","medical","asthma"]
 };
 
+const ZONE_HAZARDS = {
+  "Scout Hall": [
+    { hazard: "Slips, trips and falls inside the hall", initial_risk: "LOW", residual_risk: "LOW", controls: ["Leaders supervise all movement", "Clear pathways of gear before moving"] },
+    { hazard: "Gear not packed correctly — missing essential items", initial_risk: "MEDIUM", residual_risk: "LOW", controls: ["Packing checklist completed before departure", "Leader checks all packs"] },
+    { hazard: "Medical condition not disclosed by participant", initial_risk: "HIGH", residual_risk: "LOW", controls: ["Check Operoo medical records before activity", "Confirm medications are packed and accessible"] },
+    { hazard: "Participant not dropped off or picked up safely", initial_risk: "MEDIUM", residual_risk: "LOW", controls: ["Roll call before departure and on return", "Parent contact details confirmed"] },
+  ],
+  "Car Park": [
+    { hazard: "Being struck by a moving vehicle", initial_risk: "HIGH", residual_risk: "LOW", controls: ["Assemble away from traffic flow", "Leader controls all movement in car park", "Walk — no running"] },
+    { hazard: "Injury during loading or unloading of gear", initial_risk: "MEDIUM", residual_risk: "LOW", controls: ["Lift correctly — bend knees, straight back", "Ask for help with heavy items", "Leader supervises loading of trailers"] },
+    { hazard: "Slips or falls on uneven car park surface", initial_risk: "LOW", residual_risk: "LOW", controls: ["Enclosed shoes required", "Watch for kerbs and drains"] },
+  ],
+  "Trailhead": [
+    { hazard: "Group gets separated at the start", initial_risk: "MEDIUM", residual_risk: "LOW", controls: ["Roll call before leaving trailhead", "Buddy system confirmed and pairs announced"] },
+    { hazard: "Wrong trail taken — navigation error at start", initial_risk: "MEDIUM", residual_risk: "LOW", controls: ["Leader confirms route on map before departure", "Route briefed to all participants", "Compass bearing taken at start"] },
+  ],
+  "On the Trail": [
+    { hazard: "Slips, trips and falls on uneven or rocky terrain", initial_risk: "HIGH", residual_risk: "LOW", controls: ["Activity safety brief before departure", "Appropriate footwear required", "Stay away from cliff edges", "Increase care in steep or wet sections"] },
+    { hazard: "Participant gets lost or separated from group", initial_risk: "MEDIUM", residual_risk: "MEDIUM", controls: ["Buddy system enforced", "Map and compass per buddy pair", "Regular head counts", "3-whistle signal means stop and stay put"] },
+    { hazard: "Sunburn, dehydration or heat illness", initial_risk: "HIGH", residual_risk: "MEDIUM", controls: ["Minimum 1.5L water per person", "Sunscreen applied regularly", "Wide-brimmed hat and long-sleeve shirt", "Regular water and rest breaks"] },
+    { hazard: "Encounter with dangerous fauna — snake, spider or insect", initial_risk: "MEDIUM", residual_risk: "LOW", controls: ["Snake encounter safety brief before activity", "Snake bite bandage in personal first aid kit", "Insect repellent applied", "Appropriate clothing and long socks", "Check shoes before putting them on"] },
+    { hazard: "Extreme weather — lightning, high winds or bushfire", initial_risk: "HIGH", residual_risk: "MEDIUM", controls: ["Check BOM forecast before activity", "Check Fires Near Me app", "Cancel if extreme fire danger", "Move to safe haven if severe weather develops", "Take shelter if lightning within 5km"] },
+    { hazard: "Waterway or creek crossing", initial_risk: "HIGH", residual_risk: "MEDIUM", controls: ["Scout crossing point before the group commits", "No crossing moving water above knee height", "Leader supervises each crossing", "Group supported formation", "Unbuckle hip belt before crossing"] },
+    { hazard: "Pre-existing medical condition — allergy, asthma or injury", initial_risk: "HIGH", residual_risk: "MEDIUM", controls: ["All medical conditions confirmed via Operoo before departure", "Action plans agreed with parents", "Medications carried by participant AND a leader"] },
+    { hazard: "Cold weather exposure or hypothermia", initial_risk: "MEDIUM", residual_risk: "LOW", controls: ["Warm layers and rain jacket packed", "Monitor participants for signs of cold", "Shelter from wind at rest stops"] },
+  ],
+  "Camp": [
+    { hazard: "Burns from campfire or gas stove", initial_risk: "HIGH", residual_risk: "LOW", controls: ["Stove and fire safety briefing before use", "1 metre clearance from flammable material", "No stoves inside tents", "Adult leader supervises all fire and stove use"] },
+    { hazard: "Cuts or injuries from tools — knives or axes", initial_risk: "MEDIUM", residual_risk: "LOW", controls: ["Tool safety briefing before use", "Carry tools with blade covered", "Leader supervises all tool use", "No running near tools"] },
+    { hazard: "Cold weather or hypothermia overnight", initial_risk: "HIGH", residual_risk: "LOW", controls: ["Sleeping bag rated to 0°C minimum", "Layered clothing", "Shelter from wind", "Monitor for shivering or confusion overnight"] },
+    { hazard: "Slips, trips and falls in camp area at night", initial_risk: "LOW", residual_risk: "LOW", controls: ["Keep pathways clear of gear", "Use torch after dark", "No running in camp"] },
+    { hazard: "Food contamination or allergic reaction", initial_risk: "MEDIUM", residual_risk: "LOW", controls: ["Check all dietary needs before planning menus", "Label allergen-free food clearly", "Separate utensils for allergen-free meals"] },
+  ],
+  "Campsite": [
+    { hazard: "Slips, trips and falls in camp environment", initial_risk: "LOW", residual_risk: "LOW", controls: ["Leader supervision", "Keep pathways clear", "Use torch after dark"] },
+    { hazard: "Cold weather or hypothermia", initial_risk: "MEDIUM", residual_risk: "LOW", controls: ["Sleeping bag rated to 0°C minimum", "Layered clothing", "Shelter from wind", "Monitor participants"] },
+    { hazard: "Burns from campfire or stove", initial_risk: "MEDIUM", residual_risk: "LOW", controls: ["Stove and fire safety briefing", "Adult supervision of all fire use", "1 metre clearance from flammables"] },
+    { hazard: "Food contamination or allergic reaction", initial_risk: "MEDIUM", residual_risk: "LOW", controls: ["Check dietary needs before planning menus", "Label allergen-free food"] },
+  ],
+  "Activities Area": [
+    { hazard: "Burns from campfire or gas stove", initial_risk: "HIGH", residual_risk: "LOW", controls: ["Stove safety briefing before use", "Adult supervision of all fire use", "1 metre clearance from flammables"] },
+    { hazard: "Cuts from tools or sharp objects", initial_risk: "MEDIUM", residual_risk: "LOW", controls: ["Tool safety briefing", "Blade covers when not in use", "Supervise all tool use"] },
+    { hazard: "Slips, trips and falls during activities", initial_risk: "LOW", residual_risk: "LOW", controls: ["Clear the area of hazards before starting", "Appropriate footwear"] },
+    { hazard: "Extreme weather during outdoor activities", initial_risk: "MEDIUM", residual_risk: "LOW", controls: ["Check BOM forecast", "Have a plan to move to shelter", "Cancel if dangerous conditions develop"] },
+  ],
+  "On the Water": [
+    { hazard: "Participant separated from craft — drowning risk", initial_risk: "HIGH", residual_risk: "MEDIUM", controls: ["Activity boundaries established before launch", "Buddy system enforced on water", "Person-overboard drill completed before activity", "Safety officer afloat at all times", "Throw rope deployed and ready to use"] },
+    { hazard: "Capsize, swamping or collision between craft", initial_risk: "HIGH", residual_risk: "MEDIUM", controls: ["Capsize and re-entry drill completed before activity", "Safety boat alongside group at all times", "Maintain safe distance between craft"] },
+    { hazard: "Sunburn or dehydration on water", initial_risk: "MEDIUM", residual_risk: "LOW", controls: ["Sunscreen applied before launch", "Water bottles on board each craft", "Wide-brimmed hat worn"] },
+    { hazard: "Extreme weather — wind, lightning or storm", initial_risk: "HIGH", residual_risk: "LOW", controls: ["Monitor BOM and wind forecast before and during activity", "Cancel if winds over 20km/h", "Return to shore immediately if lightning", "Evacuate all from water if thunder heard"] },
+    { hazard: "Pre-existing medical conditions — cramp or asthma", initial_risk: "MEDIUM", residual_risk: "LOW", controls: ["Medical conditions confirmed before activity", "Medications accessible — not at bottom of dry bag", "First aid kit ashore with qualified person"] },
+  ],
+  "Launch Point": [
+    { hazard: "Slips and falls on bank or jetty", initial_risk: "MEDIUM", residual_risk: "LOW", controls: ["Enclosed non-slip shoes required", "PFDs on before entering launch area", "Leader controls movement on jetty"] },
+    { hazard: "Craft collisions during launch or landing", initial_risk: "LOW", residual_risk: "LOW", controls: ["Launch one craft at a time", "Clear area before next craft launches"] },
+  ],
+  "Landing": [
+    { hazard: "Slips and falls on bank or jetty during landing", initial_risk: "MEDIUM", residual_risk: "LOW", controls: ["Enclosed non-slip shoes required", "Leader on bank to assist", "One craft lands at a time"] },
+    { hazard: "Participant injury during boat exit", initial_risk: "LOW", residual_risk: "LOW", controls: ["Leader assists exit from craft", "No standing in craft during landing approach"] },
+  ],
+  "On the Road/Trail": [
+    { hazard: "Vehicle collision at road crossing", initial_risk: "HIGH", residual_risk: "MEDIUM", controls: ["Safety brief before ride — road rules and road crossing procedure", "Controlled crossing — leader confirms safe before anyone crosses", "Helmets on at all times", "Leader at front and rear of group"] },
+    { hazard: "Crash or fall from bike on uneven or slippery surface", initial_risk: "MEDIUM", residual_risk: "LOW", controls: ["Helmets and enclosed shoes mandatory", "Single file, 2 bike lengths between riders", "No racing, no jumps, no stunts"] },
+    { hazard: "Mechanical failure causing a crash", initial_risk: "MEDIUM", residual_risk: "LOW", controls: ["Brake and tyre check before departure", "Leader carries basic tools and tyre repair kit", "Control speed at all times"] },
+    { hazard: "Participant separated or lost on route", initial_risk: "MEDIUM", residual_risk: "LOW", controls: ["Route briefed to all participants before starting", "Leader at front and rear of group", "Regular head counts at stops"] },
+    { hazard: "Sunburn or dehydration on longer rides", initial_risk: "MEDIUM", residual_risk: "LOW", controls: ["Minimum 0.5L water per person", "Sunscreen applied before starting", "Rest stops in shade"] },
+  ],
+  "Destination": [
+    { hazard: "Falls from height or cliff edge", initial_risk: "HIGH", residual_risk: "MEDIUM", controls: ["Stay minimum 2 body-lengths from cliff edges", "Leader controls access to exposed areas", "No one approaches edge unless authorised"] },
+    { hazard: "Getting lost or disoriented at destination", initial_risk: "MEDIUM", residual_risk: "LOW", controls: ["Confirm location on map on arrival", "Group stays together", "Buddy system enforced at destination"] },
+    { hazard: "Extreme weather at exposed destination", initial_risk: "HIGH", residual_risk: "MEDIUM", controls: ["Check BOM forecast before departing", "Plan route to shelter from destination", "Cancel if extreme conditions forecast"] },
+  ],
+  "Cliff Base": [
+    { hazard: "Struck by falling rocks, debris or dropped equipment", initial_risk: "HIGH", residual_risk: "MEDIUM", controls: ["Isolate base area below active pitch", "Remove loose rocks from cliff before use", "All persons wear helmets at cliff side", "No one below without helmet and safety brief"] },
+    { hazard: "Slips, trips and falls at cliff base", initial_risk: "MEDIUM", residual_risk: "LOW", controls: ["Enclosed footwear with ankle support required", "Brief participants on terrain at base", "Clear debris from base area before activity"] },
+  ],
+  "On the Cliff": [
+    { hazard: "Fall from height during abseil or climb", initial_risk: "HIGH", residual_risk: "MEDIUM", controls: ["ABCDE safety check before every descent and ascent", "Helmets worn at all times cliff-side", "Lowerable belay (MMO) with separate top belay backup", "Guide raises or lowers abseiler if misadventure occurs"] },
+    { hazard: "Suspension trauma — participant hanging in harness", initial_risk: "HIGH", residual_risk: "LOW", controls: ["Rescue plan in place before activity starts", "Rescue capable of starting immediately", "Patient removed from cliff or placed horizontal within 5 minutes"] },
+    { hazard: "Anchor failure or unsafe rigging", initial_risk: "HIGH", residual_risk: "MEDIUM", controls: ["All anchors rigged on SERENE principles", "All screwgate carabiners checked by Guide", "All equipment meets AAAS standards"] },
+    { hazard: "Falling rocks or debris from cliff face", initial_risk: "HIGH", residual_risk: "MEDIUM", controls: ["Helmets on at all times cliff-side", "Isolate base area when climbers are above", "Remove loose material from cliff before activity"] },
+    { hazard: "Participant in distress or panic on cliff", initial_risk: "MEDIUM", residual_risk: "LOW", controls: ["Full participant briefing before each abseil", "Guide talks participant down if they become distressed", "Activity can be stopped and participant lowered at any time"] },
+  ],
+  "Water Entry": [
+    { hazard: "Slips and falls on wet pool surrounds", initial_risk: "MEDIUM", residual_risk: "LOW", controls: ["Walk — no running on pool surrounds at any time", "Pool safety infrastructure in place", "Pool staff on hand"] },
+    { hazard: "Diving into shallow water — spinal injury risk", initial_risk: "HIGH", residual_risk: "LOW", controls: ["No diving unless in a designated diving area", "Brief all participants — no diving rule explained clearly"] },
+  ],
+  "In the Water": [
+    { hazard: "Drowning or near-drowning", initial_risk: "HIGH", residual_risk: "LOW", controls: ["Qualified Basic Water Rescue leader supervising at all times", "Minimum 2 adults present at all times", "Participants grouped by self-declared swimming ability", "Pool staff on hand", "Rescue equipment at pool side and ready"] },
+    { hazard: "Cramp or exhaustion in the water", initial_risk: "MEDIUM", residual_risk: "LOW", controls: ["Participants advised to exit water if tired", "Supervisors actively watch for signs of distress", "Planned rest breaks during the session"] },
+    { hazard: "Pre-existing medical condition — asthma, heart or allergy", initial_risk: "MEDIUM", residual_risk: "LOW", controls: ["Medical conditions confirmed before activity", "Participant EpiPen or inhaler kept accessible — not locked away", "Pool staff on hand"] },
+  ],
+};
+
+const ZONE_PROMPTS = {
+  "Scout Hall": ["Does everyone have the right gear packed for the activity?", "Are all medical conditions known by the leaders?", "Do you know the plan for everyone getting home safely after the activity?", "Have you done a roll call to confirm everyone is present?"],
+  "Car Park": ["Where will parents drop off and pick up participants?", "Who is in charge of directing movement in the car park?", "How will you load heavy gear into vehicles or trailers safely?", "Is there a safe assembly point away from moving traffic?"],
+  "Trailhead": ["Have you done a final head count before heading out?", "Does everyone know the route and what to do if they get separated?", "Has someone taken a grid reference of the start point?"],
+  "On the Trail": ["What will you do if someone gets injured on the trail and can't walk out?", "What is your turn-back time if you're running behind schedule?", "How will you handle any creek or water crossings on the route?", "What is the weather forecast — including wind and any fire danger?", "What animals or plants might be dangerous at this location?"],
+  "Camp": ["What are the fire and stove rules at this campsite?", "Who is the qualified first aider on camp?", "How will you store food safely — away from animals and insects?", "What is the plan if someone becomes unwell overnight?", "What are the boundaries scouts cannot go past without a leader?"],
+  "Campsite": ["What are the rules for fire and tool use at this campsite?", "Who is the qualified first aider on site?", "How will you store food safely overnight?"],
+  "Activities Area": ["What specific activities are planned and what could go wrong with each one?", "Who is qualified to run each of these activities?", "What is the plan if the weather turns bad during the activity?"],
+  "On the Water": ["What is the rescue procedure if someone capsizes or falls in?", "Has everyone completed the capsize drill and person-overboard drill?", "What are the activity boundaries on the water?", "What is the signal to return to shore?"],
+  "Launch Point": ["Does everyone have their PFD correctly fitted and checked?", "Who is supervising the launch and landing area?", "What is the signal to return to shore in an emergency?"],
+  "Landing": ["Where will craft be safely stored after landing?", "Who is on the bank to assist participants exiting?"],
+  "On the Road/Trail": ["Have all bikes been safety-checked — brakes and tyres working?", "Who is the leader at the front and who is at the back of the group?", "What is the plan if someone has a mechanical breakdown mid-ride?", "How will you manage road crossings safely?"],
+  "Destination": ["Is the destination area safe to explore — any cliff edges or drop-offs?", "Does everyone know the meeting point if they get separated?", "What is the weather forecast at the destination — is it exposed?"],
+  "Cliff Base": ["Are there any loose rocks above the base area?", "Is everyone wearing a properly fitted helmet?", "Is the base area clearly marked and away from falling object zones?"],
+  "On the Cliff": ["Has the Guide completed the anchor safety check?", "Has every participant received a full safety brief before going on the cliff?", "What is the rescue plan if someone gets stuck or distressed on the cliff?", "Is there a qualified Abseiling Guide or Climbing Guide present?"],
+  "Water Entry": ["Has everyone been briefed on the no-diving rule?", "Are the pool surrounds clear of trip hazards?", "Is the pool depth clearly marked?"],
+  "In the Water": ["What are the swimming ability levels of all participants — has everyone self-declared?", "Who is the qualified water safety supervisor and where will they be positioned?", "What is the rescue procedure if someone gets into trouble in the water?"],
+};
+
 /* ============================================================
    3. UTILITY FUNCTIONS
    ============================================================ */
@@ -593,7 +706,7 @@ function todayStr(){ return new Date().toLocaleDateString('en-AU', { day:'numeri
 /* ============================================================
    4. HEADER
    ============================================================ */
-function Header({ onHome, onLibrary, screen }){
+function Header({ onHome, onLibrary, onInstructions, screen }){
   return (
     <div style={{ background: HEADER_GRAD }} className="text-white shadow-lg">
       <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
@@ -611,6 +724,9 @@ function Header({ onHome, onLibrary, screen }){
           <button onClick={onLibrary}
             className="px-3 py-1 rounded-full"
             style={{ backgroundColor: screen==='library'?BLUE:'rgba(255,255,255,0.15)' }}>Library</button>
+          <button onClick={onInstructions}
+            className="px-3 py-1 rounded-full"
+            style={{ backgroundColor: screen==='instructions'?BLUE:'rgba(255,255,255,0.15)' }}>How to use</button>
         </div>
       </div>
     </div>
@@ -705,7 +821,7 @@ function TimelineStrip({ activityDate }){
 /* ============================================================
    8. PLAN CARD
    ============================================================ */
-function PlanCard({ plan, onOpen }){
+function PlanCard({ plan, onOpen, onDelete }){
   const pct = plan.percentComplete || 0;
   const statusColors = { draft:'#9ca3af', submitted: BLUE, approved:'#16a34a' };
   const at = ACTIVITY_TYPES.find(a => a.type === plan.activityType);
@@ -721,8 +837,11 @@ function PlanCard({ plan, onOpen }){
             <div className="text-xs text-gray-500">{at ? at.label : plan.activityType} · {formatDate(plan.activityDate)}</div>
           </div>
         </div>
-        <span className="text-xs px-2 py-1 rounded-full text-white capitalize whitespace-nowrap"
-          style={{ backgroundColor: statusColors[plan.status] || '#9ca3af' }}>{plan.status}</span>
+        <div className="flex items-center gap-1">
+          <span className="text-xs px-2 py-1 rounded-full text-white capitalize whitespace-nowrap"
+            style={{ backgroundColor: statusColors[plan.status] || '#9ca3af' }}>{plan.status}</span>
+          <button onClick={e => { e.stopPropagation(); onDelete(plan.id); }} className="text-red-400 hover:text-red-600 font-bold px-1">✕</button>
+        </div>
       </div>
       <div className="mt-3">
         <div className="flex justify-between text-xs text-gray-500 mb-1">
@@ -739,7 +858,7 @@ function PlanCard({ plan, onOpen }){
 /* ============================================================
    7. DASHBOARD
    ============================================================ */
-function Dashboard({ plans, onNew, onOpen }){
+function Dashboard({ plans, onNew, onOpen, onDelete }){
   const upcoming = useMemo(() => {
     const withDates = plans.filter(p => p.activityDate)
       .filter(p => new Date(p.activityDate).getTime() >= TODAY.getTime() - 24*3600*1000)
@@ -771,7 +890,7 @@ function Dashboard({ plans, onNew, onOpen }){
         </div>
       ) : (
         <div className="grid sm:grid-cols-2 gap-4">
-          {plans.map(p => <PlanCard key={p.id} plan={p} onOpen={onOpen} />)}
+          {plans.map(p => <PlanCard key={p.id} plan={p} onOpen={onOpen} onDelete={onDelete} />)}
         </div>
       )}
     </div>
@@ -821,49 +940,25 @@ function RiskSceneSection({ activityType, sectionData, onChange }){
 
   const hazardState = sectionData.hazardState || {};
 
-  const libActs = libraryForType(activityType);
-  const candidatesByZone = useMemo(() => {
-    const map = {};
-    zones.forEach(z => { map[z.label] = []; });
-    libActs.forEach(act => {
-      (act.hazards||[]).forEach(h => {
-        const hl = h.hazard.toLowerCase();
-        zones.forEach(z => {
-          const kws = ZONE_KEYWORDS[z.label] || [];
-          if(kws.some(kw => hl.includes(kw))){
-            if(!map[z.label].some(e => e.hazard === h.hazard)){
-              map[z.label].push({ ...h, sourceTitle: act.title });
-            }
-          }
-        });
-      });
-    });
-    return map;
-  }, [activityType]);
-
   function update(newHazardState){
     const hazards = Object.values(newHazardState)
-      .filter(h => h.status === 'yes' || h.status === 'maybe')
+      .filter(h => h.status === 'yes')
       .map(h => ({ hazard:h.hazard, zone:h.zone, status:h.status, initial_risk:h.initial_risk, controls:h.controls, residual_risk:h.residual_risk }));
     onChange({ hazardState: newHazardState, hazards });
   }
 
-  function setStatus(key, lib, zone, status){
+  function toggleZoneHazard(zone, lib){
+    const key = zone + '|' + lib.hazard;
     const next = { ...hazardState };
-    const existing = next[key] || {};
+    const existing = next[key];
+    const nowSelected = !(existing && existing.status === 'yes');
     next[key] = {
       hazard: lib.hazard, zone,
-      status,
-      initial_risk: existing.initial_risk || lib.initial_risk || 'MEDIUM',
-      controls: existing.controls !== undefined ? existing.controls : (lib.controls || []).join('\n'),
-      residual_risk: existing.residual_risk || lib.residual_risk || 'LOW',
-      libInitial: lib.initial_risk
+      status: nowSelected ? 'yes' : 'no',
+      initial_risk: lib.initial_risk,
+      controls: (lib.controls || []).join('\n'),
+      residual_risk: lib.residual_risk,
     };
-    update(next);
-  }
-  function setField(key, field, value){
-    const next = { ...hazardState };
-    next[key] = { ...next[key], [field]: value };
     update(next);
   }
 
@@ -878,24 +973,31 @@ function RiskSceneSection({ activityType, sectionData, onChange }){
     setShowCustom(false);
   }
 
-  const reviewedZones = new Set(Object.values(hazardState).filter(h=>h.status==='yes'||h.status==='maybe').map(h=>h.zone));
-
-  const candidates = candidatesByZone[activeZone] || [];
-  const customInZone = Object.entries(hazardState).filter(([k,h]) => h.custom && h.zone === activeZone);
-
-  function RiskSelect({ value, onChange }){
-    const c = riskColor(value);
-    return (
-      <select value={value} onChange={e=>onChange(e.target.value)}
-        className="rounded px-2 py-1 text-sm font-bold border"
-        style={{ backgroundColor: c.soft, color:'#000' }}>
-        {['LOW','MEDIUM','HIGH'].map(o => <option key={o} value={o}>{o}</option>)}
-      </select>
-    );
+  function removeCustom(key){
+    const next = { ...hazardState };
+    delete next[key];
+    update(next);
   }
+
+  const reviewedZones = new Set(
+    Object.values(hazardState)
+      .filter(h => h.status === 'yes' || h.status === 'no')
+      .map(h => h.zone)
+  );
+
+  const zoneHazards = ZONE_HAZARDS[activeZone] || [];
+  const customInZone = Object.entries(hazardState).filter(([k,h]) => h.custom && h.zone === activeZone && h.status === 'yes');
+  const prompts = ZONE_PROMPTS[activeZone] || [];
+
+  const riskEmoji = { HIGH:'🔴', MEDIUM:'🟡', LOW:'🟢' };
+  const riskBg = { HIGH:'#fee2e2', MEDIUM:'#fef3c7', LOW:'#dcfce7' };
+  const riskBorder = { HIGH:'#dc2626', MEDIUM: GOLD, LOW:'#16a34a' };
+
+  const allSelectedHazards = Object.values(hazardState).filter(h => h.status === 'yes');
 
   return (
     <div>
+      {/* Zone tabs */}
       <div className="overflow-x-auto scrollx -mx-1 mb-4">
         <div className="flex gap-2 px-1 pb-1">
           {zones.map(z => {
@@ -915,105 +1017,127 @@ function RiskSceneSection({ activityType, sectionData, onChange }){
         </div>
       </div>
 
-      <div className="text-sm font-bold mb-3" style={{ color: PURPLE }}>
+      <div className="text-sm font-bold mb-1" style={{ color: PURPLE }}>
         {reviewedZones.size} of {zones.length} zones reviewed
       </div>
-
       <div className="text-sm text-gray-600 mb-3">
-        Hazards that might happen at <b>{activeZone}</b>. Tell us which ones matter for your activity.
+        Tap the hazards below that could happen at <b>{activeZone}</b> for your activity.
       </div>
 
-      <div className="space-y-3">
-        {candidates.length === 0 && customInZone.length === 0 && (
-          <div className="text-sm text-gray-400 italic">No suggested hazards for this zone — add your own below!</div>
-        )}
-        {candidates.map((lib, i) => {
+      {/* Hazard tile grid */}
+      {zoneHazards.length === 0 && customInZone.length === 0 && (
+        <div className="text-sm text-gray-400 italic mb-4">No suggested hazards for this zone — add your own below!</div>
+      )}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+        {zoneHazards.map((lib, i) => {
           const key = activeZone + '|' + lib.hazard;
           const h = hazardState[key] || {};
+          const selected = h.status === 'yes';
+          const ir = lib.initial_risk || 'MEDIUM';
           return (
-            <div key={i} className="bg-white rounded-xl shadow p-4">
-              <div className="font-bold mb-2" style={{ color: PURPLE }}>{lib.hazard}</div>
-              <div className="text-sm text-gray-600 mb-2">Is this relevant to your activity?</div>
-              <div className="flex gap-2 mb-2">
-                {[['yes','✅ Yes','#16a34a'],['maybe','❓ Maybe', GOLD],['no','❌ No','#dc2626']].map(([val,lbl,col]) => (
-                  <button key={val} onClick={() => setStatus(key, lib, activeZone, val)}
-                    className="px-3 py-1 rounded-full text-sm font-bold border-2"
-                    style={{ borderColor: col, backgroundColor: h.status===val?col:'#fff', color: h.status===val?'#fff':'#000' }}>
-                    {lbl}
-                  </button>
-                ))}
-              </div>
-              {(h.status === 'yes' || h.status === 'maybe') && (
-                <div className="space-y-2 mt-3 border-t pt-3">
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="font-bold w-24">Initial Risk</span>
-                    <RiskSelect value={h.initial_risk} onChange={v=>setField(key,'initial_risk',v)} />
-                  </div>
-                  <div>
-                    <div className="text-sm font-bold">Controls (how you'll stay safe)</div>
-                    <textarea value={h.controls} onChange={e=>setField(key,'controls',e.target.value)}
-                      rows={4} className="w-full border rounded p-2 text-sm mt-1" />
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="font-bold w-24">Residual Risk</span>
-                    <RiskSelect value={h.residual_risk} onChange={v=>setField(key,'residual_risk',v)} />
-                  </div>
-                  <div className="text-xs italic" style={{ color: BLUE }}>
-                    💡 On a similar {activityType}, this was rated {lib.initial_risk}
-                  </div>
+            <button key={i} onClick={() => toggleZoneHazard(activeZone, lib)}
+              className="text-left rounded-xl p-3 border-2 transition"
+              style={{ borderColor: selected ? riskBorder[ir] : '#e5e7eb',
+                backgroundColor: selected ? riskBg[ir] : '#fff' }}>
+              <div className="flex items-start gap-2">
+                <span className="text-xl flex-shrink-0">{riskEmoji[ir] || '🟡'}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-bold leading-tight" style={{ color: PURPLE }}>{lib.hazard}</div>
+                  <div className="text-xs text-gray-500 mt-1">Initial risk: {ir}</div>
+                  {selected
+                    ? <div className="text-xs font-bold mt-1" style={{ color: riskBorder[ir] }}>✅ Included</div>
+                    : <div className="text-xs text-gray-400 mt-1">Tap to include</div>
+                  }
                 </div>
-              )}
-            </div>
+              </div>
+            </button>
           );
         })}
-
-        {customInZone.map(([key, h]) => (
-          <div key={key} className="bg-white rounded-xl shadow p-4 border-l-4" style={{ borderColor: BLUE }}>
-            <div className="font-bold mb-2" style={{ color: PURPLE }}>⭐ {h.hazard} <span className="text-xs text-gray-400">(your hazard)</span></div>
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm">
-                <span className="font-bold w-24">Initial Risk</span>
-                <RiskSelect value={h.initial_risk} onChange={v=>setField(key,'initial_risk',v)} />
-              </div>
-              <textarea value={h.controls} onChange={e=>setField(key,'controls',e.target.value)}
-                rows={3} className="w-full border rounded p-2 text-sm" placeholder="Controls" />
-              <div className="flex items-center gap-2 text-sm">
-                <span className="font-bold w-24">Residual Risk</span>
-                <RiskSelect value={h.residual_risk} onChange={v=>setField(key,'residual_risk',v)} />
-              </div>
-            </div>
-          </div>
-        ))}
       </div>
 
-      <div className="mt-4">
+      {/* Custom hazards in this zone */}
+      {customInZone.length > 0 && (
+        <div className="mb-4 space-y-2">
+          {customInZone.map(([key, h]) => (
+            <div key={key} className="bg-white rounded-xl shadow p-3 border-l-4 flex items-start justify-between gap-2" style={{ borderColor: BLUE }}>
+              <div>
+                <div className="text-sm font-bold" style={{ color: PURPLE }}>⭐ {h.hazard}</div>
+                <div className="text-xs text-gray-500">Your specific risk · Initial: {h.initial_risk} → Residual: {h.residual_risk}</div>
+              </div>
+              <button onClick={() => removeCustom(key)} className="text-red-400 text-lg leading-none flex-shrink-0">✕</button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Think about prompts */}
+      {prompts.length > 0 && (
+        <div className="rounded-xl p-4 mb-4" style={{ backgroundColor:'#fef3c7' }}>
+          <div className="font-bold text-sm mb-2">💭 Think about...</div>
+          <ul className="space-y-1">
+            {prompts.map((p, i) => (
+              <li key={i} className="text-sm flex gap-2">
+                <span className="text-gray-400">•</span>
+                <span>{p}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Add specific risk */}
+      <div className="mb-6">
         {!showCustom ? (
           <button onClick={() => setShowCustom(true)}
             className="px-4 py-2 rounded-full border-2 text-sm font-bold"
-            style={{ borderColor: BLUE, color: BLUE }}>➕ Add your own hazard</button>
+            style={{ borderColor: BLUE, color: BLUE }}>➕ Add a specific risk for this activity</button>
         ) : (
-          <div className="bg-white rounded-xl shadow p-4 space-y-2">
+          <div className="bg-white rounded-xl shadow p-4 space-y-3">
+            <div className="text-sm font-bold" style={{ color: PURPLE }}>Add a specific risk</div>
+            <div className="text-xs text-gray-500">Think about anything special about THIS specific activity that isn't already in the list above.</div>
             <input value={custom.hazard} onChange={e=>setCustom({...custom, hazard:e.target.value})}
-              placeholder="Describe the hazard" className="w-full border rounded p-2 text-sm" />
-            <div className="flex gap-2 items-center text-sm">
-              <span className="font-bold">Initial</span>
+              placeholder="e.g. 'The road crossing near our trailhead is very busy'"
+              className="w-full border rounded p-2 text-sm" />
+            <div className="rounded p-2 text-xs" style={{ backgroundColor:'#e0f2fe' }}>
+              💡 Things to think about: Is there anything unique about this specific location? Any particular times of day that are riskier? Any conditions that make it harder or more dangerous than usual?
+            </div>
+            <div className="flex gap-2 items-center text-sm flex-wrap">
+              <label className="font-bold">Initial risk</label>
               <select value={custom.initial} onChange={e=>setCustom({...custom, initial:e.target.value})} className="border rounded p-1">
                 {['LOW','MEDIUM','HIGH'].map(o=><option key={o}>{o}</option>)}
               </select>
-              <span className="font-bold">Residual</span>
+              <label className="font-bold">Residual risk</label>
               <select value={custom.residual} onChange={e=>setCustom({...custom, residual:e.target.value})} className="border rounded p-1">
                 {['LOW','MEDIUM','HIGH'].map(o=><option key={o}>{o}</option>)}
               </select>
             </div>
             <textarea value={custom.controls} onChange={e=>setCustom({...custom, controls:e.target.value})}
-              rows={3} placeholder="How will you control it?" className="w-full border rounded p-2 text-sm" />
+              rows={3} placeholder="How will you control or manage this risk? List your safety measures." className="w-full border rounded p-2 text-sm" />
             <div className="flex gap-2">
-              <button onClick={addCustom} className="px-4 py-1 rounded-full font-bold" style={{ backgroundColor: GOLD, color:'#000' }}>Add</button>
+              <button onClick={addCustom} className="px-4 py-1 rounded-full font-bold" style={{ backgroundColor: GOLD, color:'#000' }}>Add risk</button>
               <button onClick={() => setShowCustom(false)} className="px-4 py-1 rounded-full border text-sm">Cancel</button>
             </div>
           </div>
         )}
       </div>
+
+      {/* Summary of all selected hazards */}
+      {allSelectedHazards.length > 0 && (
+        <div className="bg-white rounded-xl shadow p-4">
+          <div className="font-bold mb-3 text-sm" style={{ color: PURPLE }}>📋 Your Risk Assessment so far ({allSelectedHazards.length} hazards)</div>
+          <div className="space-y-1">
+            {allSelectedHazards.map((h, i) => {
+              const c = riskColor(h.residual_risk);
+              return (
+                <div key={i} className="flex items-center justify-between text-sm py-1 border-b last:border-0">
+                  <span className="flex-1 text-xs">{h.hazard} <span className="text-gray-400">({h.zone})</span></span>
+                  <span className="text-xs px-2 py-0.5 rounded-full font-bold ml-2 whitespace-nowrap" style={{ backgroundColor: c.bg, color: c.text }}>{h.residual_risk}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1723,6 +1847,87 @@ function planFromTemplate(act){
 /* ============================================================
    18. APP
    ============================================================ */
+function InstructionsScreen({ onBack }) {
+  return (
+    <div className="min-h-screen" style={{ backgroundColor: '#f3f4f6' }}>
+      {/* Hero banner */}
+      <div className="p-6 text-white text-center" style={{ background: HEADER_GRAD }}>
+        <div className="text-3xl mb-2">🏕️</div>
+        <h1 className="text-2xl font-bold mb-1">How to use the Scout Planner</h1>
+        <p className="text-sm opacity-90">Follow these steps to build your activity safety plan</p>
+      </div>
+
+      <div className="p-4 max-w-lg mx-auto space-y-4 pb-8">
+
+        {/* Step cards */}
+        {[
+          {
+            num: 1,
+            title: "Pick your activity type 🥾🏕️🛶",
+            body: "When you get to the home page, click Start a New Plan. Then choose what kind of activity you're planning — hike, camp, paddling and more."
+          },
+          {
+            num: 2,
+            title: "Answer the questions 📝",
+            body: "Work through each section of the planner. There are 14 sections covering everything from where you're going, to who's coming, to what you'll eat. Answer as many as you can — you can always come back later!"
+          },
+          {
+            num: 3,
+            title: "Do your Risk Assessment ⚠️",
+            body: "In Section 6, you'll see the different places you'll be during your activity (like the Scout Hall, Car Park, and wherever you're headed). Click each location and tick any hazards that could happen there. The tool gives you a list of common ones — just tap to include them!"
+          },
+          {
+            num: 4,
+            title: "Choose your gear 🎒",
+            body: "In Section 8 (Equipment Room), you'll see a list of gear for your type of activity. Tap the items you'll be bringing. The tool will add up the weight so you can make sure your pack isn't too heavy!"
+          },
+          {
+            num: 5,
+            title: "Export and submit your plan 📄",
+            body: "When you're done, go to Section 14 (Review & Export). Click the big button to download your Word documents, then submit your plan to your leader for review."
+          },
+        ].map(step => (
+          <div key={step.num} className="bg-white rounded-2xl shadow p-4 flex gap-4 items-start">
+            <div className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-lg" style={{ backgroundColor: PURPLE }}>
+              {step.num}
+            </div>
+            <div>
+              <div className="font-bold text-base mb-1" style={{ color: PURPLE }}>{step.title}</div>
+              <div className="text-sm text-gray-700">{step.body}</div>
+            </div>
+          </div>
+        ))}
+
+        {/* Tips section */}
+        <div className="rounded-2xl p-4" style={{ backgroundColor: '#fef3c7' }}>
+          <div className="font-bold mb-3" style={{ color: '#92400e' }}>💡 Tips</div>
+          <ul className="space-y-2">
+            {[
+              "Your plan saves automatically as you go — you can close the tab and come back later",
+              "Check the Library for real examples from your group to get ideas",
+              "Not sure what to put? Use the hint boxes 💡 — they explain what each question is asking",
+              "Ask your leader or mentoring guide if you're stuck — that's what they're there for!",
+            ].map((tip, i) => (
+              <li key={i} className="text-sm flex gap-2">
+                <span style={{ color: GOLD }}>•</span>
+                <span>{tip}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Back button */}
+        <button onClick={onBack}
+          className="w-full py-3 rounded-2xl font-bold text-white text-lg"
+          style={{ backgroundColor: PURPLE }}>
+          ← Back to Home
+        </button>
+
+      </div>
+    </div>
+  );
+}
+
 function App(){
   const [screen, setScreen] = useState('dashboard');
   const [plans, setPlans] = useState(() => loadPlans());
@@ -1767,10 +1972,11 @@ function App(){
     <div className="min-h-screen bg-gray-100 pb-12">
       <Header screen={screen}
         onHome={()=>setScreen('dashboard')}
-        onLibrary={()=>setScreen('library')} />
+        onLibrary={()=>setScreen('library')}
+        onInstructions={()=>setScreen('instructions')} />
 
       {screen === 'dashboard' &&
-        <Dashboard plans={plans} onNew={()=>setScreen('newPlan')} onOpen={openPlan} />}
+        <Dashboard plans={plans} onNew={()=>setScreen('newPlan')} onOpen={openPlan} onDelete={(id) => setPlans(prev => prev.filter(p => p.id !== id))} />}
 
       {screen === 'newPlan' &&
         <NewPlan onPick={startNew} onCancel={()=>setScreen('dashboard')} />}
@@ -1778,6 +1984,9 @@ function App(){
       {screen === 'wizard' && currentPlan &&
         <Wizard plan={currentPlan} setPlan={setWizardPlan}
           onExit={()=>setScreen('planDetail')} onExport={generateAllDocs} />}
+
+      {screen === 'instructions' &&
+        <InstructionsScreen onBack={()=>setScreen('dashboard')} />}
 
       {screen === 'library' &&
         <LibraryScreen onUseTemplate={useTemplate} />}
