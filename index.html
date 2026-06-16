@@ -1,0 +1,1801 @@
+[Resource from github at repo://gumtree-ridge/scout-planner/sha/cfb2eebb4724ec09c60a1edd452e827e5064bd76/contents/index.html] <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>1st Jerra Scout Planner</title>
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/docx@8.5.0/build/index.js"></script>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+  .scrollx::-webkit-scrollbar { height: 6px; }
+  .scrollx::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useMemo } = React;
+
+/* ============================================================
+   1. LIBRARY DATA
+   ============================================================ */
+const LIBRARY_DATA = {
+  activities: [
+    {
+      id:"act-001", title:"OAS Stage 4 Overnight Hike — Kambah Pool to Cotter Bend",
+      type:"hike", oas_stage:4, date:"2024-11-23", duration_nights:1,
+      location:{name:"Murrumbidgee Corridor / Lower Cotter Catchment",region:"ACT",park:"ACT Parks",
+        start_point:"Kambah Pool Carpark (GR 827810)",finish_point:"Cotter Bend Carpark (GR 761888)",
+        track_grade:"AWTGS Grade 4",distance_km:28,terrain:"tracked"},
+      supervision:"direct",
+      participants:{youth_count:14,min_oas_stage:3,leader_count:2},
+      weather:{season:"spring",temp_range:"9-23°C"},
+      equipment:{
+        group:["compasses","maps","MSR water filter","6x 2-person hike tents","2x UHF radios","SPOT beacon"],
+        individual:["hike pack 50L","tent shared","sleeping bag/mattress","gas stove/pot set shared",
+          "water bottles 1.5L min","wet/cold weather clothes","hike boots","long-sleeve shirt",
+          "broad-brimmed hat","water shoes","personal first aid kit","maps and compass per buddy pair"]},
+      menu:{meals:"2x lunches, 1x dinner, 1x breakfast, snacks",
+        water_plan:"Min 1.5L each. Patrol water filter for resupply from Murrumbidgee/Cotter Rivers."},
+      comms:{primary:"UHF Channel 16",alternate:"UHF Channel 27",emergency:"SPOT beacon"},
+      safe_havens:["Cotter Reserve Campground (GR 771891)"],
+      overdue_time:"18:00 Sun 24 Nov 24",
+      hospital:"Woden Hospital — 02 5124 0000",
+      cancellation_triggers:["severe adverse weather","high fire danger","NP closure","fewer than 5 scouts or 2 leaders"],
+      hazards:[
+        {hazard:"Slips, trips and falls on uneven/rocky terrain",initial_risk:"HIGH",residual_risk:"LOW",
+          controls:["Activity safety brief pre-departure","Individual first aid kits","Appropriate footwear","Stay 2 body-lengths from cliff edges","Increased care in hazardous areas"]},
+        {hazard:"Lost or separated participant",initial_risk:"MEDIUM",residual_risk:"MEDIUM",
+          controls:["Buddy system","Map and compass per buddy pair","Navigation refresher","Regular head counts","3-whistle signal, stay put"]},
+        {hazard:"Sunburn, dehydration, hyperthermia",initial_risk:"HIGH",residual_risk:"MEDIUM",
+          controls:["Min 1.5L water each","Sunscreen applied regularly","Wide-brimmed hat and long-sleeve shirt","Regular water breaks","Water filter for resupply"]},
+        {hazard:"Dangerous fauna (snakes, spiders, insects)",initial_risk:"MEDIUM",residual_risk:"MEDIUM",
+          controls:["Snake encounter briefing","Snake bite bandage in personal first aid kit","Insect repellent","Appropriate clothing and socks","Tents zipped up"]},
+        {hazard:"Extreme weather (lightning, high winds, bushfire)",initial_risk:"HIGH",residual_risk:"MEDIUM",
+          controls:["Monitor BOM forecast pre-activity","Check Fires Near Me","Cancel if extreme fire danger","Move to safe haven if severe weather","Shelter if lightning within 5km"]},
+        {hazard:"Waterway crossing on route",initial_risk:"HIGH",residual_risk:"MEDIUM",
+          controls:["Recon all water features before crossing","No crossing moving water above knee","AA Leader supervises","Group supported formation"]},
+        {hazard:"Pre-existing injury, illness or allergy (including anaphylaxis)",initial_risk:"HIGH",residual_risk:"MEDIUM",
+          controls:["Confirm all medical conditions via Operoo pre-departure","Action plans agreed with parents","EpiPen carried by participant and leader"]},
+        {hazard:"Bushfire from camp cooking",initial_risk:"HIGH",residual_risk:"MEDIUM",
+          controls:["Hike stove safety refresher before use","1m clearance from flammable material","No stoves in tents"]}
+      ]
+    },
+    {
+      id:"act-002", title:"OAS Stage 4 Overnight Hike #2 — Booroomba Rocks",
+      type:"hike", oas_stage:4, date:"2025-11-22", duration_nights:1,
+      location:{name:"Booroomba Rocks — Orroral Valley, Namadgi NP",region:"ACT",
+        park:"Namadgi National Park",start_point:"Booroomba Rocks carpark (GR 802620)",
+        finish_point:"Orroral Tracking Station carpark (GR 771554)",distance_km:20,terrain:"tracked"},
+      supervision:"direct",
+      participants:{youth_count:8,min_oas_stage:3,leader_count:4},
+      weather:{season:"spring",temp_range:"6-20°C"},
+      equipment:{
+        group:["compasses","maps","MSR water filter","4x UHF radios","Garmin InReach"],
+        individual:["hike pack 50L","tent shared","sleeping bag/mattress","gas stove/pot set shared",
+          "water bottles 1.5L min","wet/cold weather clothes","hike boots","long-sleeve shirt","broad-brimmed hat","personal first aid kit"]},
+      menu:{meals:"2x lunches, 1x dinner, 1x breakfast, snacks",water_plan:"Min 1.5L each. Patrol water filter for resupply from Orroral River."},
+      comms:{primary:"UHF Channel 39",alternate:"UHF Channel 27 / mobile",emergency:"Garmin InReach PLB"},
+      safe_havens:["Honeysuckle Creek Campground (GR 789604)","Orroral Former Tracking Station (GR 771554)"],
+      overdue_time:"20:00 Sun 23 Nov 25",
+      hospital:"Woden Hospital — 02 5124 0000",
+      cancellation_triggers:["severe adverse weather","high fire danger","NP closure","fewer than 5 scouts or 2 leaders"],
+      hazards:[
+        {hazard:"Slips, trips and falls including cliff edge at Booroomba Rocks",initial_risk:"HIGH",residual_risk:"LOW",
+          controls:["Activity safety brief","Individual first aid kits","Appropriate footwear","Stay minimum 2 body-lengths from cliff edges"]},
+        {hazard:"Waterway crossing — Orroral River",initial_risk:"HIGH",residual_risk:"MEDIUM",
+          controls:["Recon before crossing","AA Leader supervises","No crossing if above knee in moving water","Group supported formation"]},
+        {hazard:"Sunburn, dehydration, hyperthermia",initial_risk:"HIGH",residual_risk:"MEDIUM",
+          controls:["Min 1.5L water each","Sunscreen","Wide-brimmed hat","Regular water breaks"]},
+        {hazard:"Extreme weather (fire, lightning, cold)",initial_risk:"HIGH",residual_risk:"MEDIUM",
+          controls:["Check BOM and Fires Near Me pre-activity","Cancel if extreme fire danger","Safe haven identified"]}
+      ]
+    },
+    {
+      id:"act-003", title:"Scout Patrol Standing Camps — Kowen Forest",
+      type:"camp", oas_stage:"3-5", date:"2025-06-07", duration_nights:2,
+      location:{name:"Old Kowen Homestead, Kowen Forest",region:"ACT",park:"Kowen Forest",terrain:"established campsite"},
+      supervision:"indirect",
+      participants:{youth_count:20,leader_count:8},
+      weather:{season:"winter",temp_range:"2-11°C"},
+      equipment:{
+        group:["UHF radios","compasses","patrol tents","cooking stores","shelter","group trailer"],
+        individual:["sleeping gear","personal clothing","dilly bag","chair","BP pack contents"]},
+      menu:{meals:"Youth-developed patrol menus",water_plan:"200L held at safety vehicle for refills"},
+      comms:{primary:"UHF Channel 16",alternate:"UHF Channel 27 / mobile"},
+      safe_havens:["Old Kowen Homestead picnic shelter"],
+      overdue_time:"16:00 Mon 10 Jun 25",
+      hospital:"Queanbeyan Hospital (12km) — 02 5124 0000",
+      cancellation_triggers:["severe adverse weather"],
+      hazards:[
+        {hazard:"Slips, trips, falls in camp environment",initial_risk:"LOW",residual_risk:"LOW",
+          controls:["Leader supervision","Personal first aid kits"]},
+        {hazard:"Cold weather exposure / hypothermia",initial_risk:"MEDIUM",residual_risk:"LOW",
+          controls:["Sleeping bag rated to 0°C minimum","Layered clothing","Shelter from wind","Monitor participants"]},
+        {hazard:"Burns from campfire or stove",initial_risk:"MEDIUM",residual_risk:"LOW",
+          controls:["Stove safety briefing","Adult supervision of fires","1m clearance from flammables"]}
+      ]
+    },
+    {
+      id:"act-004", title:"Scouts Paddling Night — Lake Jerrabomberra",
+      type:"paddling", oas_stage:"1-3", date:"2025-12-09", duration_nights:0,
+      location:{name:"Queanbeyan River / Lake Jerrabomberra",region:"ACT",water_grade:"Inland Flat Water"},
+      supervision:"direct",
+      participants:{youth_count:30,leader_count:7},
+      weather:{season:"summer",temp_range:"12-26°C"},
+      equipment:{
+        group:["kayaks/canoes","PFDs","paddles","remote first aid kit","UHF radios","throw rope","safety craft"],
+        individual:["PFD (fitted and checked)","enclosed shoes","appropriate clothing"]},
+      menu:{meals:"Pizza after activity",water_plan:"Min 1L per person"},
+      comms:{primary:"Mobile phone (Activity Leader)",alternate:"Group UHF radios"},
+      safe_havens:["Queanbeyan Suspension Bridge East","Queen Elizabeth Playground"],
+      overdue_time:"21:00",
+      hospital:"Queanbeyan Hospital — 02 6150 7000",
+      cancellation_triggers:["winds over 20 km/h","lightning storm","unsafe water levels"],
+      hazards:[
+        {hazard:"Participant separated from craft / drowning",initial_risk:"HIGH",residual_risk:"MODERATE",
+          controls:["Activity boundaries established","Buddy system enforced","Person-overboard drill","Safety Officer Afloat","Throw rope deployed"]},
+        {hazard:"Capsize / swamp / collision between craft",initial_risk:"HIGH",residual_risk:"MODERATE",
+          controls:["Participants briefed to stay with craft","Canoe recovery and re-entry practiced","Safety boat alongside"]},
+        {hazard:"Slips, trips and falls on bank / jetty",initial_risk:"MODERATE",residual_risk:"LOW",
+          controls:["Enclosed shoes required","Activities conducted clear of hazardous ground","First Aid Officer ashore"]}
+      ]
+    },
+    {
+      id:"act-005", title:"Liam's Stage 5 Adventurous Journey — Namadgi NP",
+      type:"hike", oas_stage:5, date:"2026-04-17", duration_nights:2,
+      location:{name:"Namadgi NP — Visitor Centre to Orroral Tracking Station",region:"ACT",
+        park:"Namadgi National Park",start_point:"Namadgi Visitor Centre",finish_point:"Orroral Tracking Station",
+        distance_km:29.5,terrain:"tracked"},
+      supervision:"indirect (shadow party)",
+      participants:{youth_count:5,leader_count:5},
+      weather:{season:"autumn",temp_range:"6-18°C"},
+      equipment:{
+        group:["Garmin InReach","UHF radios","water purifiers x2","patrol repair kit"],
+        individual:["hike pack","tent shared","sleeping bag","sleeping mat","gas stove/pot set",
+          "water bottles x2 (2L min)","rain jacket","warm clothes","hike boots","broad-brimmed hat",
+          "personal first aid kit incl. 2x snake bite bandages","whistle","torch","maps and compass"]},
+      menu:{meals:"3-day 2-night AJ menu",water_plan:"2L each leaving camp each day. Water purification from streams. 2x purifiers carried."},
+      comms:{primary:"UHF radio to shadow party (report at each track junction)",alternate:"Mobile phone",emergency:"Garmin InReach SOS"},
+      safe_havens:["Honeysuckle Creek Campground","Orroral Tracking Station"],
+      hospital:"Woden Hospital — 02 5124 0000",
+      cancellation_triggers:["extreme fire danger","active bushfire alert","severe adverse weather"],
+      hazards:[
+        {hazard:"Extreme weather (heat, cold, rain, wind, lightning, bushfire)",initial_risk:"HIGH",residual_risk:"MEDIUM",
+          controls:["Monitor BOM leading up to hike","Cancel if extreme fire danger","Carry rain jacket and warm layers","Seek shelter if lightning within 5km"]},
+        {hazard:"Slips, trips, falls on rocky/steep terrain",initial_risk:"HIGH",residual_risk:"MEDIUM",
+          controls:["Adequate space between individuals on steep sections","Stay 2 body-lengths from cliff edges","Ankle-supporting footwear"]},
+        {hazard:"Navigation error / participants lost",initial_risk:"MEDIUM",residual_risk:"LOW",
+          controls:["Double-check decisions with APL","Radio shadow party at every track junction","Buddy system","3-whistle signal, stay put"]},
+        {hazard:"Medical conditions (anaphylaxis — nut allergy, asthma)",initial_risk:"HIGH",residual_risk:"MEDIUM",
+          controls:["No peanuts in patrol food","Leaders AND youth carry EpiPen","Confirm all medications before departure"]}
+      ]
+    },
+    {
+      id:"act-006", title:"Swimming and Aquatics Skills Night — ADFA Pool",
+      type:"swimming", oas_stage:"2-4", date:"2026-04-28", duration_nights:0,
+      location:{name:"ADFA Indoor Sports Centre",region:"ACT",venue_type:"indoor pool"},
+      supervision:"direct",
+      participants:{youth_count:25,leader_count:4},
+      weather:{season:"autumn",temp_range:"indoor"},
+      equipment:{
+        group:["PFDs for practical activities","snorkels and masks","first aid kit"],
+        individual:["swimming shorts/rash vest","swimming goggles","towel","change of clothes"]},
+      menu:{meals:"Not applicable",water_plan:"Water available on site"},
+      comms:{primary:"Mobile phone",emergency:"000"},
+      safe_havens:["ADFA Indoor Sports Centre foyer"],
+      hospital:"Canberra Hospital — 02 5124 0000",
+      cancellation_triggers:["fewer than 2 qualified leaders on site"],
+      hazards:[
+        {hazard:"Drowning or near-drowning",initial_risk:"HIGH",residual_risk:"LOW",
+          controls:["Qualified Basic Water Rescue leader supervising","Minimum 2 adults at all times","Participants grouped by self-declared ability","Pool staff on hand"]},
+        {hazard:"Slip and fall on pool surrounds",initial_risk:"MEDIUM",residual_risk:"LOW",
+          controls:["Indoor pool venue with standard safety infrastructure","Pool staff on hand"]},
+        {hazard:"Pre-existing medical conditions (asthma, allergy)",initial_risk:"MEDIUM",residual_risk:"LOW",
+          controls:["Participants bring own EpiPen and inhaler","Medical conditions confirmed pre-activity"]}
+      ]
+    },
+    {
+      id:"act-007", title:"Group Vertical Day — White Rocks (Abseil and Climb)",
+      type:"vertical", oas_stage:"1-6", date:"2024-09-14", duration_nights:0,
+      location:{name:"White Rocks, Queanbeyan",region:"NSW",
+        coordinates:{cliff:"-35.381342, 149.247640",parking:"Wickerslack Lane -35.387832, 149.239765"},
+        tenure:"Crown Land — known climbing area, no permit required"},
+      supervision:"direct",
+      participants:{youth_count:40,leader_count:6},
+      weather:{season:"spring",temp_range:"15-22°C"},
+      equipment:{
+        group:["Harnesses x20","Helmets x25","Static rope 40m x3","Dynamic rope 20m x3",
+          "Assorted descenders x20","Prusiks x12","Rigging carabiners x26","Remote first aid kit","Tarp shelter"],
+        individual:["Water bottle (2-4 litres)","Enclosed footwear with ankle support","Hat","Warm clothes and raincoat",
+          "Day pack","Personal first aid kit","Snacks/lunch","Gloves (recommended)"]},
+      menu:{meals:"BYO lunch and snacks",water_plan:"Min 2L per person"},
+      comms:{primary:"Mobile phone",emergency:"000"},
+      safe_havens:["Below cliff — tarp shelter at site"],
+      hospital:"Queanbeyan Hospital, 107 Collett St Queanbeyan NSW 2620",
+      cancellation_triggers:["Thunderstorm","Heavy rain","Winds over 39 km/h","Significant rain in prior 48 hours"],
+      hazards:[
+        {hazard:"Fall from height during abseil or climb",initial_risk:"HIGH",residual_risk:"MEDIUM",
+          controls:["ABCDE safety check before every descent/ascent","Helmets worn at all times cliff-side","Lowerable belay (MMO) with separate top belay backup","Guide raises/lowers abseiler in event of misadventure"]},
+        {hazard:"Suspension trauma (participant hanging in harness over 5 min)",initial_risk:"HIGH",residual_risk:"LOW",
+          controls:["Rescue plan in place before activity commences","Rescue capable of starting immediately","Patient removed from cliff or placed horizontal within 5 minutes"]},
+        {hazard:"Falling objects (rocks, debris, dropped equipment)",initial_risk:"HIGH",residual_risk:"MEDIUM",
+          controls:["Isolate area below active pitch","Remove loose rocks/debris from cliff prior to use","All persons wear helmets cliff-side"]},
+        {hazard:"Anchor failure / unsafe rigging",initial_risk:"HIGH",residual_risk:"MEDIUM",
+          controls:["All anchors on SERENE principles","Screw-gate carabiners checked by Guide","Equipment meets AAAS standards"]}
+      ]
+    },
+    {
+      id:"act-008", title:"Scout Bike Ride — Zoo Pines Mountain Bike Activity",
+      type:"cycling", oas_stage:"1-4", date:"2026-02-24", duration_nights:0,
+      location:{name:"Zoo Pines, Canberra",region:"ACT",
+        start_finish:"Scrivener Dam Lookout carpark, Lady Denman Drive",distance_km:6,terrain:"mixed"},
+      supervision:"direct",
+      participants:{youth_count:35,leader_count:9},
+      weather:{season:"summer",temp_range:"10-23°C"},
+      equipment:{
+        group:["Group first aid kit","2x UHF radios per group","Basic tools and tyre repair kit"],
+        individual:["Functional bike (mandatory)","AS2063 certified helmet (mandatory)","Enclosed suitable shoes (mandatory)",
+          "BP day pack with min 0.5L water","Personal first aid kit","Emergency whistle","Rain jacket"]},
+      menu:{meals:"BYO snacks",water_plan:"Min 0.5L per person"},
+      comms:{primary:"Mobile phones (all leaders)",alternate:"UHF radios (2x per group)",emergency:"000"},
+      safe_havens:["Western corner of zoo fence near Tuggeranong Parkway","Clear area just off Lady Denman Drive"],
+      hospital:"Canberra Private Hospital, 70 Kent St Deakin ACT — 02 6173 3733",
+      cancellation_triggers:["Lightning storm","Rain or heavy rain forecast","Supervision ratio above 1:20"],
+      hazards:[
+        {hazard:"Vehicle accident at road crossing",initial_risk:"HIGH",residual_risk:"MEDIUM",
+          controls:["Safety brief before ride","Controlled road crossing — no one crosses until Leader confirms safe","Helmets on at all times","Leader at front and rear"]},
+        {hazard:"Crash or collision from uneven/slippery surface",initial_risk:"MEDIUM",residual_risk:"LOW",
+          controls:["Helmets and enclosed shoes mandatory","Single file, 2 bike lengths between riders","No racing, no jumps","First aid kit carried by leaders"]},
+        {hazard:"Mechanical failure causing crash",initial_risk:"MEDIUM",residual_risk:"LOW",
+          controls:["Brake and tyre check before departure","Leader carries basic tools and tyre repair kit","Control speed"]},
+        {hazard:"Member getting lost",initial_risk:"MEDIUM",residual_risk:"LOW",
+          controls:["Route briefed before departure","Leader front and rear","Single file group riding","Regular head counts"]}
+      ]
+    }
+  ],
+  packing_lists: {
+    hike: [
+      {item:"Hike pack (~50L)", category:"essential", weight:0.5, emoji:"🎒"},
+      {item:"Tent (shared between two)", category:"essential", weight:2, emoji:"⛺"},
+      {item:"Sleeping bag", category:"essential", weight:1, emoji:"🛏️"},
+      {item:"Sleeping mat", category:"essential", weight:0.4, emoji:"🟩"},
+      {item:"Gas stove and pot set (shared)", category:"essential", weight:0.5, emoji:"🍳"},
+      {item:"Water bottles (min 1.5L)", category:"essential", weight:1.5, emoji:"💧"},
+      {item:"Wet/cold weather clothes", category:"essential", weight:0.5, emoji:"🧥"},
+      {item:"Hike boots", category:"essential", weight:0.5, emoji:"👢"},
+      {item:"Long-sleeve collared shirt", category:"essential", weight:0.2, emoji:"👕"},
+      {item:"Broad-brimmed hat", category:"essential", weight:0.1, emoji:"🪖"},
+      {item:"Water shoes (for creek crossings)", category:"recommended", weight:0.3, emoji:"👟"},
+      {item:"Personal first aid kit incl. snake bite bandage", category:"essential", weight:0.2, emoji:"🩹"},
+      {item:"Map and compass", category:"essential", weight:0.1, emoji:"🗺️"},
+      {item:"Sunscreen", category:"essential", weight:0.1, emoji:"🧴"},
+      {item:"Insect repellent", category:"essential", weight:0.1, emoji:"🦟"},
+      {item:"Whistle", category:"essential", weight:0.05, emoji:"📯"},
+      {item:"Head torch and spare batteries", category:"essential", weight:0.2, emoji:"🔦"},
+      {item:"Rain jacket/poncho", category:"essential", weight:0.3, emoji:"🌧️"},
+      {item:"Snacks and food", category:"essential", weight:0.5, emoji:"🍫"}
+    ],
+    camp: [
+      {item:"Sleeping bag (0°C rated minimum)", category:"essential", weight:1, emoji:"🛏️"},
+      {item:"Camp mattress or stretcher", category:"essential", weight:1, emoji:"🟩"},
+      {item:"Spare clothes (x2 sets)", category:"essential", weight:0.5, emoji:"👕"},
+      {item:"Large winter jacket", category:"essential", weight:0.5, emoji:"🧥"},
+      {item:"Sturdy outdoor shoes", category:"essential", weight:0.5, emoji:"👢"},
+      {item:"Rain coat/poncho", category:"essential", weight:0.3, emoji:"🌧️"},
+      {item:"Dilly bag (plate, bowl, KFS, cup, tea-towel)", category:"essential", weight:0.3, emoji:"🍽️"},
+      {item:"BP day pack", category:"essential", weight:0.3, emoji:"🎒"},
+      {item:"Personal first aid kit", category:"essential", weight:0.2, emoji:"🩹"},
+      {item:"Torch and head-torch", category:"essential", weight:0.2, emoji:"🔦"},
+      {item:"Sunscreen and insect repellent", category:"essential", weight:0.2, emoji:"🧴"},
+      {item:"Hand sanitiser", category:"essential", weight:0.1, emoji:"🧼"},
+      {item:"Toiletries bag", category:"essential", weight:0.2, emoji:"🪥"},
+      {item:"Camp chair", category:"optional", weight:1, emoji:"🪑"},
+      {item:"Beanie", category:"recommended", weight:0.1, emoji:"🧢"}
+    ],
+    paddling: [
+      {item:"PFD (fitted and checked)", category:"essential", weight:0.5, emoji:"🦺"},
+      {item:"Enclosed shoes (not thongs)", category:"essential", weight:0.3, emoji:"👟"},
+      {item:"Appropriate clothing (can get wet)", category:"essential", weight:0.3, emoji:"👕"},
+      {item:"Water bottle (min 1L)", category:"essential", weight:1, emoji:"💧"},
+      {item:"Sunscreen", category:"essential", weight:0.1, emoji:"🧴"},
+      {item:"Change of dry clothes (in dry bag)", category:"recommended", weight:0.3, emoji:"🧥"},
+      {item:"Sunglasses", category:"recommended", weight:0.05, emoji:"🕶️"}
+    ],
+    vertical: [
+      {item:"Water bottle (2-4L)", category:"essential", weight:2, emoji:"💧"},
+      {item:"Enclosed footwear with ankle support", category:"essential", weight:0.5, emoji:"👢"},
+      {item:"Hat", category:"essential", weight:0.1, emoji:"🪖"},
+      {item:"Warm clothes and raincoat", category:"essential", weight:0.5, emoji:"🧥"},
+      {item:"Day pack", category:"essential", weight:0.3, emoji:"🎒"},
+      {item:"Personal first aid kit", category:"essential", weight:0.2, emoji:"🩹"},
+      {item:"Snacks and lunch", category:"essential", weight:0.5, emoji:"🍱"},
+      {item:"Gloves", category:"recommended", weight:0.1, emoji:"🧤"},
+      {item:"Beanie (doubles as hair cover under helmet)", category:"recommended", weight:0.1, emoji:"🧢"}
+    ],
+    cycling: [
+      {item:"Functional bike (checked brakes and tyres)", category:"essential", weight:10, emoji:"🚴"},
+      {item:"AS2063 certified helmet (fitted and checked)", category:"essential", weight:0.3, emoji:"⛑️"},
+      {item:"Enclosed shoes suitable for cycling", category:"essential", weight:0.3, emoji:"👟"},
+      {item:"BP day pack", category:"essential", weight:0.3, emoji:"🎒"},
+      {item:"Water bottle (min 0.5L)", category:"essential", weight:0.5, emoji:"💧"},
+      {item:"Personal first aid kit", category:"essential", weight:0.2, emoji:"🩹"},
+      {item:"Emergency whistle", category:"essential", weight:0.05, emoji:"📯"},
+      {item:"Rain jacket", category:"essential", weight:0.3, emoji:"🌧️"},
+      {item:"Cycle tools and puncture kit", category:"recommended", weight:0.2, emoji:"🔧"},
+      {item:"Bike lights", category:"recommended", weight:0.1, emoji:"💡"}
+    ],
+    swimming: [
+      {item:"Swimming shorts or rash vest", category:"essential", weight:0.1, emoji:"🩱"},
+      {item:"Towel", category:"essential", weight:0.3, emoji:"🏖️"},
+      {item:"Change of clothes", category:"essential", weight:0.3, emoji:"👕"},
+      {item:"Water bottle (min 0.5L)", category:"essential", weight:0.5, emoji:"💧"},
+      {item:"Swimming goggles", category:"recommended", weight:0.05, emoji:"🥽"},
+      {item:"Thongs/sandals", category:"recommended", weight:0.2, emoji:"🩴"}
+    ]
+  }
+};
+
+/* Activity type tiles for NewPlan */
+const ACTIVITY_TYPES = [
+  {type:"hike", label:"Hike", emoji:"🥾", desc:"Day walks and overnight bushwalks"},
+  {type:"camp", label:"Camp", emoji:"🏕️", desc:"Standing camps and patrol camps"},
+  {type:"paddling", label:"Paddling", emoji:"🛶", desc:"Kayaking and canoeing"},
+  {type:"cycling", label:"Cycling", emoji:"🚴", desc:"Bike rides and MTB"},
+  {type:"vertical", label:"Vertical", emoji:"🧗", desc:"Abseiling and climbing"},
+  {type:"swimming", label:"Swimming", emoji:"🏊", desc:"Pool and aquatics skills"}
+];
+
+/* ============================================================
+   2. WIZARD SECTIONS
+   ============================================================ */
+const WIZARD_SECTIONS = [
+  {
+    id:"activityInfo", number:1, label:"Activity Info",
+    intro:"Let's start with the basics about your adventure!",
+    fields:[
+      {id:"s1_type", label:"Activity type", type:"display"},
+      {id:"s1_name", label:"What's the name of your activity?", type:"text", required:true,
+        hint:"Give it a cool name — e.g. 'OAS Stage 4 Hike — Kambah Pool to Cotter Bend'"},
+      {id:"s1_group", label:"What Scout Group are you from?", type:"text", default:"1st Jerrabomberra Scout Group"},
+      {id:"s1_dates", label:"When is the activity?", type:"date", required:true, hint:"This is used to build your planning timeline"},
+      {id:"s1_mentor", label:"Who is your mentoring guide or supervising leader?", type:"text"}
+    ]
+  },
+  {
+    id:"participants", number:2, label:"Participants",
+    intro:"Tell us about the people coming along.",
+    fields:[
+      {id:"p1_youthCount", label:"How many scouts are coming?", type:"number"},
+      {id:"p2_oasStage", label:"What OAS stage are most scouts at?", type:"select", options:[1,2,3,4,5,6,7],
+        hint:"OAS (Outdoor Adventure Skills) is the Scouts Australia rating system — Stage 1 is beginner, Stage 7 is expert"},
+      {id:"p3_specialNeeds", label:"Do any scouts have medical needs, disabilities or need extra support?", type:"textarea",
+        hint:"Include allergies, medications, mobility needs — this stays private between you and your leader"},
+      {id:"p4_leaderCount", label:"How many leaders will be there?", type:"number"},
+      {id:"p5_wwcc", label:"Do all leaders have a current Working With Children Check (WWCC)?", type:"yesno",
+        hint:"A WWCC (Working With Children Check) is a government safety check that all scout leaders must have"}
+    ]
+  },
+  {
+    id:"supervision", number:3, label:"Supervision",
+    intro:"How will leaders keep everyone safe?",
+    fields:[
+      {id:"sv1_type", label:"What type of supervision will you have?", type:"select",
+        options:["Direct — leader right beside you","Indirect — leader nearby but you work independently","Remote — leader not at the activity location"],
+        hint:"For most activities, Direct supervision is required. Indirect is only for advanced scouts on Adventurous Journeys (Stage 5+)"},
+      {id:"sv2_ratio", label:"What is the leader-to-scout ratio?", type:"text", placeholder:"e.g. 1 leader for every 6 scouts",
+        hint:"Check with your leader for the minimum ratio required for this activity type"},
+      {id:"sv3_aaQual", label:"Does your Activity Leader (AA Leader) have the right qualification for this activity?", type:"yesno",
+        hint:"An AA Leader (Adventurous Activity Leader) must hold a specific qualification for the activity type — e.g. Abseiling Guide for vertical activities"}
+    ]
+  },
+  {
+    id:"location", number:4, label:"Location",
+    intro:"Where is this all happening?",
+    fields:[
+      {id:"l1_name", label:"Where is the activity?", type:"text"},
+      {id:"l2_start", label:"What is the address or map reference of the start point?", type:"text",
+        hint:"A map reference (grid reference) looks like GR 827810 — find it on a topographic map"},
+      {id:"l3_finish", label:"What is the address or map reference of the finish point?", type:"text"},
+      {id:"l4_terrain", label:"What is the terrain like?", type:"select",
+        options:["Sealed path","Formed track","Unformed track","Cross-country / off-track","Flat water","Moving water","Indoor venue"]},
+      {id:"l5_tenure", label:"What park or land does the activity take place in?", type:"text",
+        hint:"e.g. Namadgi National Park (ACT Parks), Crown Land, Private property (need permission)"},
+      {id:"l6_permits", label:"Are any permits or bookings needed?", type:"yesno+textarea",
+        hint:"National Parks sometimes require activity permits — check the park authority's website"},
+      {id:"l7_safeHavens", label:"Where are your safe havens?", type:"textarea",
+        hint:"Safe havens are places to shelter or evacuate to if something goes wrong — like a campsite, car park, or building with phone reception"}
+    ]
+  },
+  {
+    id:"timing", number:5, label:"Timing",
+    intro:"Let's sort out the schedule.",
+    fields:[
+      {id:"t1_start", label:"What time does the activity start?", type:"time"},
+      {id:"t2_finish", label:"What time does the activity finish?", type:"time"},
+      {id:"t3_overdue", label:"What is your overdue time?", type:"time",
+        hint:"The overdue time is when your emergency contact calls for help if they haven't heard from you. Usually 1–2 hours after your planned finish."},
+      {id:"t4_emergContact", label:"Who is your emergency home contact and what's their phone number?", type:"text",
+        hint:"Pick someone who will NOT be on the activity and who will definitely be reachable"}
+    ]
+  },
+  {
+    id:"safety", number:6, label:"Risk Assessment",
+    intro:"Time to think about what could go wrong — and how you'll stay safe!",
+    fields:[{id:"safety_scene", type:"scene"}]
+  },
+  {
+    id:"emergencyPlan", number:7, label:"Emergency Plan",
+    intro:"If something goes wrong, what's the plan?",
+    fields:[
+      {id:"e1_hospital", label:"What is the nearest hospital and its phone number?", type:"text"},
+      {id:"e2_police", label:"What is the address of the nearest police station?", type:"text"},
+      {id:"e3_steps", label:"List your emergency action steps if someone is injured", type:"textarea",
+        hint:"Think about: 1. Make the scene safe 2. Call for help (000) 3. Provide first aid 4. Contact your emergency home contact 5. Contact your leader"},
+      {id:"e4_cancel", label:"What would make you cancel or stop the activity?", type:"textarea",
+        hint:"e.g. Extreme fire danger, lightning storm, participant injury, not enough leaders"},
+      {id:"e5_commsDevices", label:"What communication devices will you carry?", type:"checkboxes",
+        options:["Mobile phone","UHF radio","Satellite communicator (e.g. Garmin InReach)","PLB/EPIRB","Other"]}
+    ]
+  },
+  {
+    id:"equipment", number:8, label:"Equipment Room",
+    intro:"Pack smart! Choose your gear and we'll estimate the weight.",
+    fields:[{id:"equipment_scene", type:"equipment_scene"}]
+  },
+  {
+    id:"menuWater", number:9, label:"Menu & Water",
+    intro:"An army marches on its stomach — what's on the menu?",
+    fields:[
+      {id:"m1_meals", label:"List all the meals you'll provide", type:"textarea",
+        hint:"Include every meal, day by day — breakfast, lunch, dinner and snacks. Plan one extra meal as a backup."},
+      {id:"m2_water", label:"What is your water plan?", type:"textarea",
+        hint:"How much water will each person carry? Where will you top up? Do you need a water filter or purification tablets?"},
+      {id:"m3_dietary", label:"Are there any dietary needs or allergies in the group?", type:"textarea"},
+      {id:"m4_cost", label:"What is the estimated cost per person?", type:"number",
+        hint:"Include food, transport, entry fees and any hire gear"}
+    ]
+  },
+  {
+    id:"transport", number:10, label:"Transport",
+    intro:"How is everyone getting there and back?",
+    fields:[
+      {id:"tr1_method", label:"How are scouts getting to and from the activity?", type:"textarea",
+        hint:"e.g. Leader vehicles, bus, public transport"},
+      {id:"tr2_drivers", label:"Who are the drivers and what vehicles will they use?", type:"textarea"},
+      {id:"tr3_licensed", label:"Are all drivers licensed, insured and sober?", type:"yesno",
+        hint:"All drivers must have a valid licence, registered and insured vehicle, and zero blood alcohol. This is a Scouts Australia rule."},
+      {id:"tr4_parking", label:"Where will vehicles be parked during the activity?", type:"text"}
+    ]
+  },
+  {
+    id:"comms", number:11, label:"Communications",
+    intro:"How will you stay in touch?",
+    fields:[
+      {id:"c1_primary", label:"What is your main way of communicating during the activity?", type:"text",
+        hint:"e.g. Mobile phones, UHF radios"},
+      {id:"c2_alternate", label:"What is your backup communication method?", type:"text",
+        hint:"Always have two ways to communicate — if mobile fails, you need a backup"},
+      {id:"c3_uhf", label:"If using UHF radio, what channel will you use?", type:"text", placeholder:"e.g. Channel 16"},
+      {id:"c4_checkin", label:"How often will you check in with your emergency home contact?", type:"textarea",
+        hint:"e.g. Text when you arrive, call at lunchtime, text when you finish"}
+    ]
+  },
+  {
+    id:"leadership", number:12, label:"Leadership",
+    intro:"Who's leading the way?",
+    fields:[
+      {id:"ld1_aaLeader", label:"Who is the Activity Leader (AA Leader)?", type:"text",
+        hint:"The AA Leader is the qualified leader responsible for safety. They need a specific Adventurous Activity qualification."},
+      {id:"ld2_firstAid", label:"Who in the group holds first aid qualifications?", type:"textarea"},
+      {id:"ld3_others", label:"List all other attending leaders and their roles", type:"textarea"}
+    ]
+  },
+  {
+    id:"environment", number:13, label:"Environment",
+    intro:"Leave no trace — let's look after the bush!",
+    fields:[
+      {id:"en1_waste", label:"What is your waste management plan?", type:"textarea",
+        hint:"Pack it in, pack it out. How will you manage food scraps, toilet waste and rubbish?"},
+      {id:"en2_impact", label:"How will you minimise your impact on the environment?", type:"textarea",
+        hint:"e.g. Stay on formed tracks, don't pick plants, camp in designated areas, no fires unless in a fire ring"},
+      {id:"en3_sensitivities", label:"Are there any environmental sensitivities at this location?", type:"textarea",
+        hint:"e.g. Threatened species habitat, culturally significant sites, erosion-prone areas"}
+    ]
+  },
+  {
+    id:"review", number:14, label:"Review & Export",
+    intro:"Almost there! Let's check everything and export your documents.",
+    fields:[{id:"review_summary", type:"review_summary"}]
+  }
+];
+
+/* Zone definitions per activity type for the risk scene */
+const ZONES = {
+  hike:[{label:"Scout Hall",emoji:"🏠"},{label:"Car Park",emoji:"🚗"},{label:"Trailhead",emoji:"🌲"},{label:"On the Trail",emoji:"🥾"},{label:"Camp",emoji:"🏕️"},{label:"Destination",emoji:"🏔️"}],
+  camp:[{label:"Scout Hall",emoji:"🏠"},{label:"Car Park",emoji:"🚗"},{label:"Campsite",emoji:"🏕️"},{label:"Activities Area",emoji:"🔥"}],
+  paddling:[{label:"Scout Hall",emoji:"🏠"},{label:"Car Park",emoji:"🚗"},{label:"Launch Point",emoji:"🚢"},{label:"On the Water",emoji:"💧"},{label:"Landing",emoji:"🏖️"}],
+  cycling:[{label:"Scout Hall",emoji:"🏠"},{label:"Car Park",emoji:"🚗"},{label:"On the Road/Trail",emoji:"🚴"},{label:"Destination",emoji:"🏁"}],
+  vertical:[{label:"Scout Hall",emoji:"🏠"},{label:"Car Park",emoji:"🚗"},{label:"Cliff Base",emoji:"🧗"},{label:"On the Cliff",emoji:"🪨"}],
+  swimming:[{label:"Scout Hall",emoji:"🏠"},{label:"Car Park",emoji:"🚗"},{label:"Water Entry",emoji:"🏊"},{label:"In the Water",emoji:"💧"}]
+};
+
+/* Keyword sets used to assign library hazards to zones */
+const ZONE_KEYWORDS = {
+  "Scout Hall":["vehicle","car","park","transport","travel","driving"],
+  "Car Park":["vehicle","car","park","transport","travel","driving","loading"],
+  "Trailhead":["lost","navigation","slip","trip","fall"],
+  "On the Trail":["falling","slip","trip","lost","navigation","sunburn","dehydration","fauna","snake","weather","lightning","bushfire","waterway","crossing","terrain"],
+  "On the Water":["drown","capsize","craft","swamp","collision","slip","trip","fall","weather","lightning"],
+  "On the Cliff":["fall","cliff","height","suspension","anchor","falling object","rocks"],
+  "On the Road/Trail":["vehicle","crash","collision","slip","fall","mechanical","lost","surface","road"],
+  "Camp":["burn","stove","cooking","fire","cold","hypothermia"],
+  "Campsite":["slip","trip","fall","cold","hypothermia","burn","stove","fire"],
+  "Activities Area":["burn","stove","cooking","fire","weather","slip"],
+  "Cliff Base":["falling object","rocks","debris","slip","trip","fall"],
+  "Destination":["fall","cliff","height","suspension","weather","lost"],
+  "Launch Point":["slip","trip","fall","bank","jetty","loading"],
+  "Landing":["slip","trip","fall","bank","jetty"],
+  "Water Entry":["slip","fall","surrounds","pool","drown"],
+  "In the Water":["drown","near-drown","medical","asthma"]
+};
+
+/* ============================================================
+   3. UTILITY FUNCTIONS
+   ============================================================ */
+function generateId(){ return 'plan-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,7); }
+function loadPlans(){ try { return JSON.parse(localStorage.getItem('jerra_plans')) || []; } catch(e){ return []; } }
+function savePlans(plans){ localStorage.setItem('jerra_plans', JSON.stringify(plans)); }
+function loadUserLibrary(){ try { return JSON.parse(localStorage.getItem('jerra_library_user')) || []; } catch(e){ return []; } }
+function saveUserLibrary(lib){ localStorage.setItem('jerra_library_user', JSON.stringify(lib)); }
+
+// Sections that count toward completeness (skip review)
+const COMPLETABLE_SECTIONS = WIZARD_SECTIONS.filter(s => s.id !== 'review').map(s => s.id);
+
+function sectionHasContent(plan, sectionId){
+  const sec = (plan.sections && plan.sections[sectionId]) || {};
+  if(sectionId === 'safety'){ return Array.isArray(sec.hazards) && sec.hazards.length > 0; }
+  if(sectionId === 'equipment'){ return Array.isArray(sec.selectedItems) && sec.selectedItems.length > 0; }
+  return Object.keys(sec).some(k => { const v = sec[k]; return v !== undefined && v !== '' && !(Array.isArray(v) && v.length===0); });
+}
+
+function computePercent(plan){
+  const done = COMPLETABLE_SECTIONS.filter(id => sectionHasContent(plan, id));
+  return { completed: done, percent: Math.round((done.length / COMPLETABLE_SECTIONS.length) * 100) };
+}
+
+function formatDate(iso){
+  if(!iso) return '—';
+  const d = new Date(iso);
+  if(isNaN(d)) return iso;
+  return d.toLocaleDateString('en-AU', { day:'numeric', month:'short', year:'numeric' });
+}
+
+function riskColor(level){
+  const l = (level||'').toUpperCase();
+  if(l === 'LOW') return { bg:'#16a34a', text:'#fff', soft:'#dcfce7' };
+  if(l === 'MEDIUM' || l === 'MODERATE') return { bg:'#F5A800', text:'#000', soft:'#fef3c7' };
+  if(l === 'HIGH') return { bg:'#dc2626', text:'#fff', soft:'#fee2e2' };
+  return { bg:'#9ca3af', text:'#fff', soft:'#f3f4f6' };
+}
+
+const PURPLE = '#6B2D8B', DARKPURPLE = '#4B0D6B', GOLD = '#F5A800', BLUE = '#00A6FB';
+const HEADER_GRAD = 'linear-gradient(135deg, #6B2D8B 0%, #4B0D6B 100%)';
+const TODAY = new Date('2026-06-15');
+
+function todayStr(){ return new Date().toLocaleDateString('en-AU', { day:'numeric', month:'short', year:'numeric' }); }
+
+/* ============================================================
+   4. HEADER
+   ============================================================ */
+function Header({ onHome, onLibrary, screen }){
+  return (
+    <div style={{ background: HEADER_GRAD }} className="text-white shadow-lg">
+      <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-2 cursor-pointer" onClick={onHome}>
+          <span className="text-2xl">🏕️</span>
+          <div>
+            <div className="font-bold leading-tight">1st Jerra Scout Planner</div>
+            <div className="text-xs opacity-80">Plan adventures the safe way</div>
+          </div>
+        </div>
+        <div className="flex gap-2 text-sm">
+          <button onClick={onHome}
+            className="px-3 py-1 rounded-full"
+            style={{ backgroundColor: screen==='dashboard'?BLUE:'rgba(255,255,255,0.15)' }}>Home</button>
+          <button onClick={onLibrary}
+            className="px-3 py-1 rounded-full"
+            style={{ backgroundColor: screen==='library'?BLUE:'rgba(255,255,255,0.15)' }}>Library</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   5. POLICY BANNER
+   ============================================================ */
+function PolicyBanner(){
+  const [show, setShow] = useState(() => sessionStorage.getItem('jerra_policy_dismissed') !== '1');
+  if(!show) return null;
+  return (
+    <div style={{ backgroundColor: GOLD, color:'#000' }}
+      className="fixed bottom-0 left-0 right-0 z-40 px-4 py-2 text-sm flex items-start gap-2 shadow-2xl">
+      <span className="flex-1">
+        📋 Policy check: PRO75 Adventurous Activity Procedure was last verified June 2026. Leaders should confirm it is still current at nsw.scouts.com.au before approving any plan.
+      </span>
+      <button aria-label="Dismiss" onClick={() => { setShow(false); sessionStorage.setItem('jerra_policy_dismissed','1'); }}
+        className="font-bold px-2 leading-none">✕</button>
+    </div>
+  );
+}
+
+/* ============================================================
+   6. TIMELINE STRIP (SVG)
+   ============================================================ */
+function TimelineStrip({ activityDate }){
+  if(!activityDate) return null;
+  const target = new Date(activityDate);
+  const wk = 7*24*3600*1000;
+  const milestones = [
+    { label:"Concept", weeks:-8 },
+    { label:"Plan submitted", weeks:-6 },
+    { label:"Leader review", weeks:-5 },
+    { label:"Final approval", weeks:-3 },
+    { label:"Pre-activity brief", weeks:-1 },
+    { label:"Activity day", weeks:0 }
+  ].map(m => ({ ...m, date: new Date(target.getTime() + m.weeks*wk) }));
+
+  let firstFutureIndex = milestones.findIndex(m => m.date.getTime() > TODAY.getTime());
+  const states = milestones.map((m) => {
+    const diffDays = Math.round((m.date.getTime() - TODAY.getTime()) / (24*3600*1000));
+    if(Math.abs(diffDays) <= 3) return 'current';
+    if(m.date.getTime() < TODAY.getTime()) return 'done';
+    return 'upcoming';
+  });
+  const colorMap = { done:'#16a34a', current: GOLD, upcoming:'#9ca3af', overdue:'#dc2626' };
+  const anyCurrent = states.includes('current');
+  if(!anyCurrent && firstFutureIndex > 0){
+    const idx = firstFutureIndex - 1;
+    const diffDays = Math.round((milestones[idx].date.getTime() - TODAY.getTime()) / (24*3600*1000));
+    if(diffDays < -3) states[idx] = 'overdue';
+  }
+
+  const W = 760, H = 130, padX = 60, y = 55;
+  const step = (W - 2*padX) / (milestones.length - 1);
+
+  return (
+    <div className="bg-white rounded-xl shadow p-4 mb-6">
+      <div className="font-bold mb-1" style={{ color: PURPLE }}>📅 Your Planning Timeline</div>
+      <div className="text-xs text-gray-500 mb-2">Next activity: {formatDate(activityDate)}</div>
+      <div className="overflow-x-auto scrollx">
+        <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ minWidth: 700 }}>
+          {milestones.map((m, i) => {
+            if(i === 0) return null;
+            const x1 = padX + (i-1)*step, x2 = padX + i*step;
+            const lineDone = states[i-1] === 'done' || states[i-1] === 'current';
+            return <line key={'l'+i} x1={x1} y1={y} x2={x2} y2={y}
+              stroke={lineDone ? '#16a34a' : '#d1d5db'} strokeWidth="4" />;
+          })}
+          {milestones.map((m, i) => {
+            const x = padX + i*step;
+            const st = states[i];
+            return (
+              <g key={i}>
+                {st === 'current' && <text x={x} y={y-22} textAnchor="middle" fontSize="18">🧍</text>}
+                <circle cx={x} cy={y} r="11" fill={colorMap[st]} stroke="#fff" strokeWidth="2" />
+                <text x={x} y={y+30} textAnchor="middle" fontSize="11" fontWeight="bold" fill="#374151">{m.label}</text>
+                <text x={x} y={y+46} textAnchor="middle" fontSize="10" fill="#6b7280">
+                  {m.date.toLocaleDateString('en-AU',{day:'numeric',month:'short'})}
+                </text>
+              </g>
+            );
+          })}
+        </svg>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   8. PLAN CARD
+   ============================================================ */
+function PlanCard({ plan, onOpen }){
+  const pct = plan.percentComplete || 0;
+  const statusColors = { draft:'#9ca3af', submitted: BLUE, approved:'#16a34a' };
+  const at = ACTIVITY_TYPES.find(a => a.type === plan.activityType);
+  return (
+    <div onClick={() => onOpen(plan)}
+      className="bg-white rounded-xl shadow p-4 cursor-pointer hover:shadow-lg transition border-l-4"
+      style={{ borderColor: PURPLE }}>
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-2xl">{at ? at.emoji : '📋'}</span>
+          <div className="min-w-0">
+            <div className="font-bold truncate" style={{ color: PURPLE }}>{plan.title || 'Untitled plan'}</div>
+            <div className="text-xs text-gray-500">{at ? at.label : plan.activityType} · {formatDate(plan.activityDate)}</div>
+          </div>
+        </div>
+        <span className="text-xs px-2 py-1 rounded-full text-white capitalize whitespace-nowrap"
+          style={{ backgroundColor: statusColors[plan.status] || '#9ca3af' }}>{plan.status}</span>
+      </div>
+      <div className="mt-3">
+        <div className="flex justify-between text-xs text-gray-500 mb-1">
+          <span>Progress</span><span>{pct}%</span>
+        </div>
+        <div className="w-full bg-gray-200 rounded-full h-2">
+          <div className="h-2 rounded-full" style={{ width: pct+'%', backgroundColor: pct===100?'#16a34a':BLUE }}></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   7. DASHBOARD
+   ============================================================ */
+function Dashboard({ plans, onNew, onOpen }){
+  const upcoming = useMemo(() => {
+    const withDates = plans.filter(p => p.activityDate)
+      .filter(p => new Date(p.activityDate).getTime() >= TODAY.getTime() - 24*3600*1000)
+      .sort((a,b) => new Date(a.activityDate) - new Date(b.activityDate));
+    return withDates[0] ? withDates[0].activityDate : null;
+  }, [plans]);
+
+  return (
+    <div className="max-w-5xl mx-auto px-4 py-6">
+      <div className="rounded-xl p-6 mb-6 text-white" style={{ background: HEADER_GRAD }}>
+        <h1 className="text-2xl font-bold">G'day, Scout! 👋</h1>
+        <p className="opacity-90 mt-1">Ready to plan your next adventure? You've got this — just answer the questions and we'll build your safety plan together.</p>
+        <button onClick={onNew} className="mt-4 px-5 py-2 rounded-full" style={{ backgroundColor: GOLD, color:'#000', fontWeight:'bold' }}>
+          ➕ Start a New Plan
+        </button>
+      </div>
+
+      {upcoming && <TimelineStrip activityDate={upcoming} />}
+
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-lg font-bold" style={{ color: PURPLE }}>Your Plans</h2>
+        <span className="text-sm text-gray-500">{plans.length} plan{plans.length!==1?'s':''}</span>
+      </div>
+
+      {plans.length === 0 ? (
+        <div className="bg-white rounded-xl shadow p-8 text-center text-gray-500">
+          <div className="text-4xl mb-2">📝</div>
+          <p>No plans yet. Hit <b>Start a New Plan</b> to begin your first adventure!</p>
+        </div>
+      ) : (
+        <div className="grid sm:grid-cols-2 gap-4">
+          {plans.map(p => <PlanCard key={p.id} plan={p} onOpen={onOpen} />)}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ============================================================
+   9. NEW PLAN (activity selector)
+   ============================================================ */
+function NewPlan({ onPick, onCancel }){
+  return (
+    <div className="max-w-5xl mx-auto px-4 py-6">
+      <button onClick={onCancel} className="text-sm mb-4" style={{ color: PURPLE }}>← Back</button>
+      <h1 className="text-2xl font-bold mb-1" style={{ color: PURPLE }}>What kind of adventure?</h1>
+      <p className="text-gray-600 mb-6">Pick the type of activity you're planning. We'll set up the right questions for you.</p>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {ACTIVITY_TYPES.map(a => (
+          <button key={a.type} onClick={() => onPick(a.type)}
+            className="bg-white rounded-xl shadow p-6 text-left hover:shadow-lg transition border-2 border-transparent"
+            onMouseEnter={e=>e.currentTarget.style.borderColor=BLUE}
+            onMouseLeave={e=>e.currentTarget.style.borderColor='transparent'}>
+            <div className="text-4xl mb-2">{a.emoji}</div>
+            <div className="font-bold text-lg" style={{ color: PURPLE }}>{a.label}</div>
+            <div className="text-sm text-gray-500">{a.desc}</div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   Helper: get matching library activity for a plan type
+   ============================================================ */
+function libraryForType(type){
+  return LIBRARY_DATA.activities.filter(a => a.type === type);
+}
+
+/* ============================================================
+   10. RISK SCENE SECTION (Section 6)
+   ============================================================ */
+function RiskSceneSection({ activityType, sectionData, onChange }){
+  const zones = ZONES[activityType] || ZONES.hike;
+  const [activeZone, setActiveZone] = useState(zones[0].label);
+  const [showCustom, setShowCustom] = useState(false);
+  const [custom, setCustom] = useState({ hazard:'', initial:'MEDIUM', controls:'', residual:'LOW' });
+
+  const hazardState = sectionData.hazardState || {};
+
+  const libActs = libraryForType(activityType);
+  const candidatesByZone = useMemo(() => {
+    const map = {};
+    zones.forEach(z => { map[z.label] = []; });
+    libActs.forEach(act => {
+      (act.hazards||[]).forEach(h => {
+        const hl = h.hazard.toLowerCase();
+        zones.forEach(z => {
+          const kws = ZONE_KEYWORDS[z.label] || [];
+          if(kws.some(kw => hl.includes(kw))){
+            if(!map[z.label].some(e => e.hazard === h.hazard)){
+              map[z.label].push({ ...h, sourceTitle: act.title });
+            }
+          }
+        });
+      });
+    });
+    return map;
+  }, [activityType]);
+
+  function update(newHazardState){
+    const hazards = Object.values(newHazardState)
+      .filter(h => h.status === 'yes' || h.status === 'maybe')
+      .map(h => ({ hazard:h.hazard, zone:h.zone, status:h.status, initial_risk:h.initial_risk, controls:h.controls, residual_risk:h.residual_risk }));
+    onChange({ hazardState: newHazardState, hazards });
+  }
+
+  function setStatus(key, lib, zone, status){
+    const next = { ...hazardState };
+    const existing = next[key] || {};
+    next[key] = {
+      hazard: lib.hazard, zone,
+      status,
+      initial_risk: existing.initial_risk || lib.initial_risk || 'MEDIUM',
+      controls: existing.controls !== undefined ? existing.controls : (lib.controls || []).join('\n'),
+      residual_risk: existing.residual_risk || lib.residual_risk || 'LOW',
+      libInitial: lib.initial_risk
+    };
+    update(next);
+  }
+  function setField(key, field, value){
+    const next = { ...hazardState };
+    next[key] = { ...next[key], [field]: value };
+    update(next);
+  }
+
+  function addCustom(){
+    if(!custom.hazard.trim()) return;
+    const key = 'custom:' + custom.hazard;
+    const next = { ...hazardState };
+    next[key] = { hazard: custom.hazard, zone: activeZone, status:'yes',
+      initial_risk: custom.initial, controls: custom.controls, residual_risk: custom.residual, custom:true };
+    update(next);
+    setCustom({ hazard:'', initial:'MEDIUM', controls:'', residual:'LOW' });
+    setShowCustom(false);
+  }
+
+  const reviewedZones = new Set(Object.values(hazardState).filter(h=>h.status==='yes'||h.status==='maybe').map(h=>h.zone));
+
+  const candidates = candidatesByZone[activeZone] || [];
+  const customInZone = Object.entries(hazardState).filter(([k,h]) => h.custom && h.zone === activeZone);
+
+  function RiskSelect({ value, onChange }){
+    const c = riskColor(value);
+    return (
+      <select value={value} onChange={e=>onChange(e.target.value)}
+        className="rounded px-2 py-1 text-sm font-bold border"
+        style={{ backgroundColor: c.soft, color:'#000' }}>
+        {['LOW','MEDIUM','HIGH'].map(o => <option key={o} value={o}>{o}</option>)}
+      </select>
+    );
+  }
+
+  return (
+    <div>
+      <div className="overflow-x-auto scrollx -mx-1 mb-4">
+        <div className="flex gap-2 px-1 pb-1">
+          {zones.map(z => {
+            const active = z.label === activeZone;
+            const reviewed = reviewedZones.has(z.label);
+            return (
+              <button key={z.label} onClick={() => setActiveZone(z.label)}
+                className="flex-shrink-0 rounded-xl px-3 py-2 text-center border-2 min-w-[90px]"
+                style={{ borderColor: active ? BLUE : (reviewed ? '#16a34a' : '#e5e7eb'),
+                  backgroundColor: active ? '#e0f2fe' : '#fff' }}>
+                <div className="text-2xl">{z.emoji}</div>
+                <div className="text-xs font-bold" style={{ color: PURPLE }}>{z.label}</div>
+                {reviewed && <div className="text-[10px] text-green-600">✓ reviewed</div>}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="text-sm font-bold mb-3" style={{ color: PURPLE }}>
+        {reviewedZones.size} of {zones.length} zones reviewed
+      </div>
+
+      <div className="text-sm text-gray-600 mb-3">
+        Hazards that might happen at <b>{activeZone}</b>. Tell us which ones matter for your activity.
+      </div>
+
+      <div className="space-y-3">
+        {candidates.length === 0 && customInZone.length === 0 && (
+          <div className="text-sm text-gray-400 italic">No suggested hazards for this zone — add your own below!</div>
+        )}
+        {candidates.map((lib, i) => {
+          const key = activeZone + '|' + lib.hazard;
+          const h = hazardState[key] || {};
+          return (
+            <div key={i} className="bg-white rounded-xl shadow p-4">
+              <div className="font-bold mb-2" style={{ color: PURPLE }}>{lib.hazard}</div>
+              <div className="text-sm text-gray-600 mb-2">Is this relevant to your activity?</div>
+              <div className="flex gap-2 mb-2">
+                {[['yes','✅ Yes','#16a34a'],['maybe','❓ Maybe', GOLD],['no','❌ No','#dc2626']].map(([val,lbl,col]) => (
+                  <button key={val} onClick={() => setStatus(key, lib, activeZone, val)}
+                    className="px-3 py-1 rounded-full text-sm font-bold border-2"
+                    style={{ borderColor: col, backgroundColor: h.status===val?col:'#fff', color: h.status===val?'#fff':'#000' }}>
+                    {lbl}
+                  </button>
+                ))}
+              </div>
+              {(h.status === 'yes' || h.status === 'maybe') && (
+                <div className="space-y-2 mt-3 border-t pt-3">
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="font-bold w-24">Initial Risk</span>
+                    <RiskSelect value={h.initial_risk} onChange={v=>setField(key,'initial_risk',v)} />
+                  </div>
+                  <div>
+                    <div className="text-sm font-bold">Controls (how you'll stay safe)</div>
+                    <textarea value={h.controls} onChange={e=>setField(key,'controls',e.target.value)}
+                      rows={4} className="w-full border rounded p-2 text-sm mt-1" />
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="font-bold w-24">Residual Risk</span>
+                    <RiskSelect value={h.residual_risk} onChange={v=>setField(key,'residual_risk',v)} />
+                  </div>
+                  <div className="text-xs italic" style={{ color: BLUE }}>
+                    💡 On a similar {activityType}, this was rated {lib.initial_risk}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+
+        {customInZone.map(([key, h]) => (
+          <div key={key} className="bg-white rounded-xl shadow p-4 border-l-4" style={{ borderColor: BLUE }}>
+            <div className="font-bold mb-2" style={{ color: PURPLE }}>⭐ {h.hazard} <span className="text-xs text-gray-400">(your hazard)</span></div>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm">
+                <span className="font-bold w-24">Initial Risk</span>
+                <RiskSelect value={h.initial_risk} onChange={v=>setField(key,'initial_risk',v)} />
+              </div>
+              <textarea value={h.controls} onChange={e=>setField(key,'controls',e.target.value)}
+                rows={3} className="w-full border rounded p-2 text-sm" placeholder="Controls" />
+              <div className="flex items-center gap-2 text-sm">
+                <span className="font-bold w-24">Residual Risk</span>
+                <RiskSelect value={h.residual_risk} onChange={v=>setField(key,'residual_risk',v)} />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-4">
+        {!showCustom ? (
+          <button onClick={() => setShowCustom(true)}
+            className="px-4 py-2 rounded-full border-2 text-sm font-bold"
+            style={{ borderColor: BLUE, color: BLUE }}>➕ Add your own hazard</button>
+        ) : (
+          <div className="bg-white rounded-xl shadow p-4 space-y-2">
+            <input value={custom.hazard} onChange={e=>setCustom({...custom, hazard:e.target.value})}
+              placeholder="Describe the hazard" className="w-full border rounded p-2 text-sm" />
+            <div className="flex gap-2 items-center text-sm">
+              <span className="font-bold">Initial</span>
+              <select value={custom.initial} onChange={e=>setCustom({...custom, initial:e.target.value})} className="border rounded p-1">
+                {['LOW','MEDIUM','HIGH'].map(o=><option key={o}>{o}</option>)}
+              </select>
+              <span className="font-bold">Residual</span>
+              <select value={custom.residual} onChange={e=>setCustom({...custom, residual:e.target.value})} className="border rounded p-1">
+                {['LOW','MEDIUM','HIGH'].map(o=><option key={o}>{o}</option>)}
+              </select>
+            </div>
+            <textarea value={custom.controls} onChange={e=>setCustom({...custom, controls:e.target.value})}
+              rows={3} placeholder="How will you control it?" className="w-full border rounded p-2 text-sm" />
+            <div className="flex gap-2">
+              <button onClick={addCustom} className="px-4 py-1 rounded-full font-bold" style={{ backgroundColor: GOLD, color:'#000' }}>Add</button>
+              <button onClick={() => setShowCustom(false)} className="px-4 py-1 rounded-full border text-sm">Cancel</button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   11. EQUIPMENT ROOM SECTION (Section 8)
+   ============================================================ */
+function EquipmentRoomSection({ activityType, sectionData, onChange, plan }){
+  const baseList = LIBRARY_DATA.packing_lists[activityType] || [];
+  const stored = sectionData.selectedItems;
+
+  const initItems = useMemo(() => {
+    if(stored && stored.length){
+      const byName = {};
+      stored.forEach(s => { byName[s.item] = s; });
+      const merged = baseList.map(b => ({ ...b, selected: byName[b.item] ? byName[b.item].selected : (b.category==='essential') }));
+      const customs = stored.filter(s => !baseList.some(b => b.item === s.item)).map(c => ({ ...c, emoji: c.emoji || '📦', selected:true }));
+      return [...merged, ...customs];
+    }
+    return baseList.map(b => ({ ...b, selected: b.category === 'essential' }));
+  }, [activityType]); // eslint-disable-line
+
+  const [list, setList] = useState(initItems);
+  const [showAdd, setShowAdd] = useState(false);
+  const [newItem, setNewItem] = useState({ item:'', category:'essential', weight:0.2, emoji:'📦' });
+
+  useEffect(() => {
+    onChange({ selectedItems: list.filter(i => i.selected).map(i => ({ item:i.item, category:i.category, weight:i.weight, emoji:i.emoji, selected:true })) });
+  }, [list]);
+
+  const weight = list.filter(i => i.selected).reduce((s,i)=>s+(i.weight||0),0);
+  const weightColor = weight > 10 ? '#dc2626' : (weight > 8 ? GOLD : '#16a34a');
+
+  function toggle(idx){
+    setList(list.map((it,i) => i===idx ? { ...it, selected: !it.selected } : it));
+  }
+  function addItem(){
+    if(!newItem.item.trim()) return;
+    setList([...list, { ...newItem, weight: parseFloat(newItem.weight)||0, selected:true }]);
+    setNewItem({ item:'', category:'essential', weight:0.2, emoji:'📦' });
+    setShowAdd(false);
+  }
+
+  const catBadge = { essential:'🔴 Essential', recommended:'🟡 Recommended', optional:'🟢 Optional' };
+  const catColor = { essential:'#dc2626', recommended: GOLD, optional:'#16a34a' };
+
+  const libAct = libraryForType(activityType)[0];
+  const season = (plan.sections.activityInfo && plan.sections.activityInfo.s1_season) || (libAct && libAct.weather && libAct.weather.season) || 'the season';
+  const loc = (plan.sections.location && plan.sections.location.l1_name) || (libAct && libAct.location && libAct.location.name) || 'your location';
+
+  return (
+    <div>
+      <div className="rounded-xl p-3 mb-3 text-white text-sm" style={{ backgroundColor: BLUE }}>
+        🌤️ Heads up: it'll be <b>{season}</b> around <b>{loc}</b>. Make sure you've packed weather-appropriate gear!
+      </div>
+      <div className="rounded-xl p-3 mb-4 text-center font-bold text-white" style={{ backgroundColor: weightColor }}>
+        🎒 Estimated pack weight: {weight.toFixed(2)} kg
+        {weight > 10 && <div className="text-xs font-normal">That's over 10kg — try to cut some weight!</div>}
+        {weight > 8 && weight <= 10 && <div className="text-xs font-normal">Getting heavy — keep an eye on it.</div>}
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        {list.map((it, idx) => (
+          <button key={idx} onClick={() => toggle(idx)}
+            className="relative bg-white rounded-xl p-3 text-center border-4 transition"
+            style={{ borderColor: it.selected ? catColor[it.category] : '#e5e7eb', opacity: it.selected ? 1 : 0.7 }}>
+            {!it.selected && it.category === 'essential' && (
+              <div className="absolute top-1 right-1 text-lg" title="Essential not packed!">⚠️</div>
+            )}
+            <div className="text-3xl mb-1">{it.emoji || '📦'}</div>
+            <div className="text-xs font-bold leading-tight">{it.item}</div>
+            <div className="text-[10px] mt-1 font-bold" style={{ color: catColor[it.category] }}>{catBadge[it.category]}</div>
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-4">
+        {!showAdd ? (
+          <button onClick={() => setShowAdd(true)} className="px-4 py-2 rounded-full border-2 text-sm font-bold" style={{ borderColor: BLUE, color: BLUE }}>➕ Add your own item</button>
+        ) : (
+          <div className="bg-white rounded-xl shadow p-4 space-y-2">
+            <input value={newItem.item} onChange={e=>setNewItem({...newItem, item:e.target.value})} placeholder="Item name" className="w-full border rounded p-2 text-sm" />
+            <div className="flex gap-2 items-center text-sm flex-wrap">
+              <select value={newItem.category} onChange={e=>setNewItem({...newItem, category:e.target.value})} className="border rounded p-1">
+                <option value="essential">Essential</option><option value="recommended">Recommended</option><option value="optional">Optional</option>
+              </select>
+              <label>Weight (kg)</label>
+              <input type="number" step="0.1" value={newItem.weight} onChange={e=>setNewItem({...newItem, weight:e.target.value})} className="border rounded p-1 w-20" />
+              <input value={newItem.emoji} onChange={e=>setNewItem({...newItem, emoji:e.target.value})} className="border rounded p-1 w-12 text-center" />
+            </div>
+            <div className="flex gap-2">
+              <button onClick={addItem} className="px-4 py-1 rounded-full font-bold" style={{ backgroundColor: GOLD, color:'#000' }}>Add</button>
+              <button onClick={() => setShowAdd(false)} className="px-4 py-1 rounded-full border text-sm">Cancel</button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   12. REVIEW SUMMARY SECTION (Section 14)
+   ============================================================ */
+function ReviewSummarySection({ plan, onExport, onSubmit }){
+  const { completed } = computePercent(plan);
+  return (
+    <div>
+      <div className="bg-white rounded-xl shadow p-4 mb-4">
+        <div className="font-bold mb-3" style={{ color: PURPLE }}>Section checklist</div>
+        <div className="space-y-1">
+          {WIZARD_SECTIONS.filter(s => s.id !== 'review').map(s => {
+            const done = completed.includes(s.id);
+            return (
+              <div key={s.id} className="flex items-center justify-between text-sm py-1 border-b last:border-0">
+                <span>{s.number}. {s.label}</span>
+                <span style={{ color: done ? '#16a34a' : '#dc2626' }}>{done ? '✅ Done' : '⬜ Needs info'}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="rounded-xl p-4 mb-4 text-white" style={{ background: HEADER_GRAD }}>
+        <div className="font-bold text-lg">🎉 Great work, Scout!</div>
+        <p className="text-sm opacity-90">When you're happy with your plan, export your documents and send them to your leader for review.</p>
+      </div>
+
+      <div className="bg-white rounded-xl shadow p-4 mb-4">
+        <div className="font-bold mb-2" style={{ color: PURPLE }}>📄 Export your plan documents</div>
+        <p className="text-sm text-gray-600 mb-3">We'll create 5 Word documents you can print or email. They'll download one after another.</p>
+        <button onClick={onExport} className="px-5 py-2 rounded-full" style={{ backgroundColor: GOLD, color:'#000', fontWeight:'bold' }}>
+          ⬇️ Generate all 5 Word documents
+        </button>
+        <ul className="text-xs text-gray-500 mt-3 list-disc pl-5">
+          <li>Activity Plan</li><li>Risk Assessment</li><li>Emergency Action Plan</li><li>Packing List</li><li>Menu &amp; Water Plan</li>
+        </ul>
+      </div>
+
+      <div className="bg-white rounded-xl shadow p-4">
+        <div className="font-bold mb-2" style={{ color: PURPLE }}>📨 Submit to your leader</div>
+        <p className="text-sm text-gray-600 mb-3">Mark this plan as submitted so your leader knows it's ready for review.</p>
+        <button onClick={onSubmit} className="px-5 py-2 rounded-full text-white font-bold" style={{ backgroundColor: BLUE }}>
+          Submit plan for review
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   13. WIZARD QUESTION (single question renderer)
+   ============================================================ */
+function WizardQuestion({ field, value, onChange, plan }){
+  if(field.type === 'display'){
+    const at = ACTIVITY_TYPES.find(a => a.type === plan.activityType);
+    return (
+      <div className="mb-4">
+        <label className="block font-bold mb-1" style={{ color: PURPLE }}>{field.label}</label>
+        <div className="inline-flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor:'#e0f2fe' }}>
+          <span className="text-xl">{at?at.emoji:''}</span><span className="font-bold">{at?at.label:plan.activityType}</span>
+        </div>
+      </div>
+    );
+  }
+
+  const inputClass = "w-full border rounded-lg p-2 focus:outline-none focus:ring-2";
+
+  function Field(){
+    switch(field.type){
+      case 'text':
+        return <input type="text" value={value||''} placeholder={field.placeholder||''}
+          onChange={e=>onChange(e.target.value)} className={inputClass} />;
+      case 'number':
+        return <input type="number" value={value||''} placeholder={field.placeholder||''}
+          onChange={e=>onChange(e.target.value)} className={inputClass} />;
+      case 'date':
+        return <input type="date" value={value||''} onChange={e=>onChange(e.target.value)} className={inputClass} />;
+      case 'time':
+        return <input type="time" value={value||''} onChange={e=>onChange(e.target.value)} className={inputClass} />;
+      case 'textarea':
+        return <textarea rows={4} value={value||''} placeholder={field.placeholder||''}
+          onChange={e=>onChange(e.target.value)} className={inputClass} />;
+      case 'select':
+        return (
+          <select value={value||''} onChange={e=>onChange(e.target.value)} className={inputClass}>
+            <option value="">— Choose —</option>
+            {field.options.map(o => <option key={o} value={o}>{o}</option>)}
+          </select>
+        );
+      case 'yesno':
+        return (
+          <div className="flex gap-3">
+            {['Yes','No'].map(o => (
+              <button key={o} onClick={()=>onChange(o)} type="button"
+                className="px-6 py-2 rounded-full font-bold border-2"
+                style={{ borderColor: value===o?BLUE:'#e5e7eb', backgroundColor: value===o?BLUE:'#fff', color: value===o?'#fff':'#000' }}>
+                {o==='Yes'?'✅ Yes':'❌ No'}
+              </button>
+            ))}
+          </div>
+        );
+      case 'yesno+textarea': {
+        const v = value || {};
+        return (
+          <div>
+            <div className="flex gap-3 mb-2">
+              {['Yes','No'].map(o => (
+                <button key={o} onClick={()=>onChange({...v, answer:o})} type="button"
+                  className="px-6 py-2 rounded-full font-bold border-2"
+                  style={{ borderColor: v.answer===o?BLUE:'#e5e7eb', backgroundColor: v.answer===o?BLUE:'#fff', color: v.answer===o?'#fff':'#000' }}>
+                  {o==='Yes'?'✅ Yes':'❌ No'}
+                </button>
+              ))}
+            </div>
+            {v.answer === 'Yes' && (
+              <textarea rows={3} value={v.details||''} placeholder="Which permits or bookings? Add details here."
+                onChange={e=>onChange({...v, details:e.target.value})} className={inputClass} />
+            )}
+          </div>
+        );
+      }
+      case 'checkboxes': {
+        const arr = Array.isArray(value) ? value : [];
+        return (
+          <div className="flex flex-wrap gap-2">
+            {field.options.map(o => {
+              const on = arr.includes(o);
+              return (
+                <button key={o} type="button"
+                  onClick={()=>onChange(on ? arr.filter(x=>x!==o) : [...arr, o])}
+                  className="px-3 py-2 rounded-full text-sm border-2 font-bold"
+                  style={{ borderColor: on?BLUE:'#e5e7eb', backgroundColor: on?'#e0f2fe':'#fff' }}>
+                  {on?'☑️ ':'⬜ '}{o}
+                </button>
+              );
+            })}
+          </div>
+        );
+      }
+      default:
+        return null;
+    }
+  }
+
+  return (
+    <div className="mb-5">
+      <label className="block font-bold mb-2" style={{ color: PURPLE }}>
+        {field.label} {field.required && <span style={{ color:'#dc2626' }}>*</span>}
+      </label>
+      <Field />
+      {field.hint && (
+        <div className="mt-2 text-sm rounded-lg p-2 flex gap-2" style={{ backgroundColor:'#fef3c7' }}>
+          <span>💡</span><span>{field.hint}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ============================================================
+   14. WIZARD
+   ============================================================ */
+function completedDot(plan, section){
+  if(section.id === 'review') return false;
+  return sectionHasContent(plan, section.id);
+}
+
+function Wizard({ plan, setPlan, onExit, onExport }){
+  const [stepIdx, setStepIdx] = useState(0);
+  const section = WIZARD_SECTIONS[stepIdx];
+
+  function finalisePlan(p){
+    const { completed, percent } = computePercent(p);
+    const ai = p.sections.activityInfo || {};
+    return { ...p, title: ai.s1_name || p.title, activityDate: ai.s1_dates || p.activityDate,
+      completedSections: completed, percentComplete: percent, updatedAt: new Date().toISOString() };
+  }
+
+  function updateField(sectionId, fieldId, value){
+    setPlan(prev => finalisePlan({ ...prev, sections: { ...prev.sections, [sectionId]: { ...prev.sections[sectionId], [fieldId]: value } } }));
+  }
+  function updateSceneSection(sectionId, data){
+    setPlan(prev => finalisePlan({ ...prev, sections: { ...prev.sections, [sectionId]: { ...prev.sections[sectionId], ...data } } }));
+  }
+
+  const isLast = stepIdx === WIZARD_SECTIONS.length - 1;
+  function next(){ if(!isLast) setStepIdx(stepIdx+1); }
+  function prev(){ if(stepIdx>0) setStepIdx(stepIdx-1); else onExit(); }
+
+  return (
+    <div className="max-w-3xl mx-auto px-4 py-6 pb-24">
+      <div className="mb-4">
+        <div className="flex items-center justify-between mb-2">
+          <button onClick={onExit} className="text-sm" style={{ color: PURPLE }}>💾 Save &amp; exit</button>
+          <span className="text-sm text-gray-500">Section {section.number} of {WIZARD_SECTIONS.length}</span>
+        </div>
+        <div className="w-full bg-gray-200 rounded-full h-2">
+          <div className="h-2 rounded-full" style={{ width: ((stepIdx+1)/WIZARD_SECTIONS.length*100)+'%', backgroundColor: BLUE }}></div>
+        </div>
+        <div className="overflow-x-auto scrollx mt-2">
+          <div className="flex gap-1">
+            {WIZARD_SECTIONS.map((s,i) => (
+              <button key={s.id} onClick={()=>setStepIdx(i)} title={s.label}
+                className="flex-shrink-0 w-7 h-7 rounded-full text-xs font-bold border-2"
+                style={{ borderColor: i===stepIdx?BLUE:'#e5e7eb',
+                  backgroundColor: completedDot(plan,s)?'#16a34a': (i===stepIdx?BLUE:'#fff'),
+                  color: (completedDot(plan,s)||i===stepIdx)?'#fff':'#9ca3af' }}>
+                {s.number}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-xl p-4 mb-4 text-white" style={{ background: HEADER_GRAD }}>
+        <div className="text-xs opacity-80">Section {section.number}</div>
+        <h2 className="text-xl font-bold">{section.label}</h2>
+        <p className="text-sm opacity-90 mt-1">{section.intro}</p>
+      </div>
+
+      <div>
+        {section.fields.map(f => {
+          if(f.type === 'scene'){
+            return <RiskSceneSection key={f.id} activityType={plan.activityType}
+              sectionData={plan.sections.safety || {}}
+              onChange={data => updateSceneSection('safety', data)} />;
+          }
+          if(f.type === 'equipment_scene'){
+            return <EquipmentRoomSection key={f.id} activityType={plan.activityType}
+              sectionData={plan.sections.equipment || {}} plan={plan}
+              onChange={data => updateSceneSection('equipment', data)} />;
+          }
+          if(f.type === 'review_summary'){
+            return <ReviewSummarySection key={f.id} plan={plan}
+              onExport={() => onExport(plan)}
+              onSubmit={() => { setPlan(prev => ({ ...prev, status:'submitted', updatedAt:new Date().toISOString() })); onExit(); }} />;
+          }
+          const v = (plan.sections[section.id] || {})[f.id];
+          return <WizardQuestion key={f.id} field={f} value={v} plan={plan}
+            onChange={val => updateField(section.id, f.id, val)} />;
+        })}
+      </div>
+
+      <div className="flex justify-between mt-6">
+        <button onClick={prev} className="px-5 py-2 rounded-full border-2 font-bold" style={{ borderColor: PURPLE, color: PURPLE }}>
+          {stepIdx===0 ? '← Exit' : '← Back'}
+        </button>
+        {!isLast ? (
+          <button onClick={next} className="px-6 py-2 rounded-full" style={{ backgroundColor: GOLD, color:'#000', fontWeight:'bold' }}>
+            Next →
+          </button>
+        ) : (
+          <button onClick={onExit} className="px-6 py-2 rounded-full text-white font-bold" style={{ backgroundColor: BLUE }}>
+            Finish
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   15. LIBRARY SCREEN
+   ============================================================ */
+function LibraryScreen({ onUseTemplate }){
+  const [filter, setFilter] = useState('all');
+  const userLib = loadUserLibrary();
+  const all = [...LIBRARY_DATA.activities, ...userLib];
+  const types = ['all', ...new Set(LIBRARY_DATA.activities.map(a=>a.type))];
+  const shown = filter==='all' ? all : all.filter(a => a.type === filter);
+
+  return (
+    <div className="max-w-5xl mx-auto px-4 py-6 pb-24">
+      <h1 className="text-2xl font-bold mb-1" style={{ color: PURPLE }}>📚 Activity Library</h1>
+      <p className="text-gray-600 mb-4">Real activities from our group. Borrow ideas, hazards and gear lists for your own plan!</p>
+
+      <div className="flex flex-wrap gap-2 mb-4">
+        {types.map(t => (
+          <button key={t} onClick={()=>setFilter(t)}
+            className="px-3 py-1 rounded-full text-sm font-bold capitalize border-2"
+            style={{ borderColor: filter===t?BLUE:'#e5e7eb', backgroundColor: filter===t?BLUE:'#fff', color: filter===t?'#fff':'#000' }}>
+            {t}
+          </button>
+        ))}
+      </div>
+
+      <div className="grid sm:grid-cols-2 gap-4">
+        {shown.map(act => {
+          const at = ACTIVITY_TYPES.find(a=>a.type===act.type);
+          return (
+            <div key={act.id} className="bg-white rounded-xl shadow p-4">
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                <span className="text-2xl">{at?at.emoji:'📋'}</span>
+                <span className="text-xs px-2 py-1 rounded-full text-white capitalize" style={{ backgroundColor: PURPLE }}>{act.type}</span>
+                {act.addedBy && <span className="text-xs text-gray-400">added by {act.addedBy}</span>}
+              </div>
+              <div className="font-bold" style={{ color: PURPLE }}>{act.title}</div>
+              <div className="text-xs text-gray-500 mb-2">
+                {act.location && act.location.name} · {formatDate(act.date)}
+                {act.duration_nights ? ` · ${act.duration_nights} night${act.duration_nights>1?'s':''}` : ' · day activity'}
+              </div>
+              <div className="text-xs text-gray-600 mb-2">
+                👥 {act.participants && act.participants.youth_count} scouts · 🧑‍🏫 {act.participants && act.participants.leader_count} leaders
+                {act.oas_stage ? ` · OAS ${act.oas_stage}` : ''}
+              </div>
+              <div className="text-xs text-gray-600 mb-3">⚠️ {(act.hazards||[]).length} hazards documented</div>
+              <button onClick={()=>onUseTemplate(act)}
+                className="px-4 py-1 rounded-full text-sm font-bold" style={{ backgroundColor: GOLD, color:'#000' }}>
+                Use as starting point
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   16. PLAN DETAIL
+   ============================================================ */
+function PlanDetail({ plan, onEdit, onExport, onDelete, onBack, onApprove }){
+  const pct = plan.percentComplete || 0;
+  const safety = plan.sections.safety || {};
+  const equip = plan.sections.equipment || {};
+  return (
+    <div className="max-w-3xl mx-auto px-4 py-6 pb-24">
+      <button onClick={onBack} className="text-sm mb-3" style={{ color: PURPLE }}>← Back to plans</button>
+      <div className="rounded-xl p-5 text-white mb-4" style={{ background: HEADER_GRAD }}>
+        <h1 className="text-2xl font-bold">{plan.title || 'Untitled plan'}</h1>
+        <div className="text-sm opacity-90 mt-1">{plan.activityType} · {formatDate(plan.activityDate)} · {pct}% complete · {plan.status}</div>
+        <div className="flex flex-wrap gap-2 mt-4">
+          <button onClick={onEdit} className="px-4 py-2 rounded-full" style={{ backgroundColor: GOLD, color:'#000', fontWeight:'bold' }}>✏️ Continue editing</button>
+          <button onClick={()=>onExport(plan)} className="px-4 py-2 rounded-full text-white font-bold" style={{ backgroundColor: BLUE }}>⬇️ Export documents</button>
+          {plan.status==='submitted' && <button onClick={onApprove} className="px-4 py-2 rounded-full text-white font-bold" style={{ backgroundColor:'#16a34a' }}>✅ Approve</button>}
+        </div>
+      </div>
+
+      {plan.activityDate && <TimelineStrip activityDate={plan.activityDate} />}
+
+      <div className="bg-white rounded-xl shadow p-4 mb-4">
+        <div className="font-bold mb-2" style={{ color: PURPLE }}>⚠️ Risk Assessment ({(safety.hazards||[]).length} hazards)</div>
+        {(safety.hazards||[]).length === 0 ? <div className="text-sm text-gray-400">No hazards added yet.</div> : (
+          <div className="space-y-2">
+            {safety.hazards.map((h,i) => {
+              const c = riskColor(h.residual_risk);
+              return (
+                <div key={i} className="flex items-center justify-between text-sm border-b last:border-0 py-1">
+                  <span className="flex-1">{h.hazard} <span className="text-gray-400 text-xs">({h.zone})</span></span>
+                  <span className="text-xs px-2 py-0.5 rounded-full font-bold" style={{ backgroundColor: c.bg, color: c.text }}>{h.residual_risk}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <div className="bg-white rounded-xl shadow p-4 mb-4">
+        <div className="font-bold mb-2" style={{ color: PURPLE }}>🎒 Packing List ({(equip.selectedItems||[]).length} items)</div>
+        <div className="text-sm text-gray-600">{(equip.selectedItems||[]).map(i=>i.item).join(', ') || 'No items selected yet.'}</div>
+      </div>
+
+      <button onClick={onDelete} className="text-sm text-red-600 underline">🗑️ Delete this plan</button>
+    </div>
+  );
+}
+
+/* ============================================================
+   17. WORD DOC GENERATORS
+   ============================================================ */
+const HEADER_WARNING = "⚠️ UNCONTROLLED IF PRINTED — CHECK nsw.scouts.com.au FOR CURRENT VERSION";
+function dx(){ return window.docx; }
+
+function makeHeaderFooter(filename){
+  const { Header, Footer, Paragraph, TextRun, AlignmentType } = dx();
+  return {
+    headers: { default: new Header({ children: [ new Paragraph({ alignment: AlignmentType.CENTER,
+      children: [ new TextRun({ text: HEADER_WARNING, bold:true, color:"B45309", size:18 }) ] }) ] }) },
+    footers: { default: new Footer({ children: [ new Paragraph({ alignment: AlignmentType.CENTER,
+      children: [ new TextRun({ text: filename + " · Generated by 1st Jerra Scout Planner " + todayStr(), size:16, color:"888888" }) ] }) ] }) }
+  };
+}
+
+function titleBlock(docType, plan){
+  const { Paragraph, TextRun } = dx();
+  return [
+    new Paragraph({ children:[ new TextRun({ text:"1st Jerrabomberra Scout Group — " + docType, bold:true, size:56, color:"6B2D8B" }) ] }),
+    new Paragraph({ children:[ new TextRun({ text:(plan.title||'Untitled') + "  ·  " + formatDate(plan.activityDate), italics:true, size:24 }) ] }),
+    new Paragraph({ text:"" })
+  ];
+}
+
+function shadedCell(text, { bold, shade, width } = {}){
+  const { TableCell, Paragraph, TextRun, WidthType } = dx();
+  return new TableCell({
+    width: width ? { size: width, type: WidthType.PERCENTAGE } : undefined,
+    shading: shade ? { fill: shade } : undefined,
+    children: [ new Paragraph({ children:[ new TextRun({ text: String(text==null?'':text), bold: !!bold, color: shade==="6B2D8B" ? "FFFFFF" : "000000" }) ] }) ]
+  });
+}
+
+function buildTable(rows, headerRow){
+  const { Table, TableRow, WidthType, BorderStyle } = dx();
+  const border = { style: BorderStyle.SINGLE, size:1, color:"CCCCCC" };
+  const borders = { top:border, bottom:border, left:border, right:border, insideHorizontal:border, insideVertical:border };
+  const trs = [];
+  if(headerRow){
+    trs.push(new TableRow({ tableHeader:true, children: headerRow.map(h => shadedCell(h, { bold:true, shade:"6B2D8B" })) }));
+  }
+  rows.forEach((r, i) => {
+    const shade = i % 2 === 1 ? "F3F4F6" : "FFFFFF";
+    trs.push(new TableRow({ children: r.map((c, ci) => shadedCell(c, { bold: !headerRow && ci===0, shade })) }));
+  });
+  return new Table({ width:{ size:100, type:WidthType.PERCENTAGE }, borders, rows: trs });
+}
+
+function downloadDoc(doc, filename){
+  return dx().Packer.toBlob(doc).then(blob => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; document.body.appendChild(a); a.click();
+    setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+  });
+}
+
+function generateActivityPlan(plan){
+  const { Document } = dx();
+  const s = plan.sections;
+  const get = (sec, f) => (s[sec] && s[sec][f]) || '';
+  const equip = (s.equipment && s.equipment.selectedItems || []).map(i=>i.item).join(', ');
+  const rows = [
+    ["Activity title", plan.title || ''],
+    ["Scout Group", get('activityInfo','s1_group') || '1st Jerrabomberra Scout Group'],
+    ["Activity type", plan.activityType],
+    ["Date", formatDate(plan.activityDate)],
+    ["Location", get('location','l1_name')],
+    ["Start point", get('location','l2_start')],
+    ["Finish point", get('location','l3_finish')],
+    ["Park / tenure", get('location','l5_tenure')],
+    ["AA Leader", get('leadership','ld1_aaLeader')],
+    ["Mentoring guide", get('activityInfo','s1_mentor')],
+    ["Participants", get('participants','p1_youthCount') + " scouts, " + get('participants','p4_leaderCount') + " leaders"],
+    ["OAS stage", get('participants','p2_oasStage')],
+    ["Supervision", get('supervision','sv1_type')],
+    ["Primary comms", get('comms','c1_primary')],
+    ["Backup comms", get('comms','c2_alternate')],
+    ["Safe havens", get('location','l7_safeHavens')],
+    ["Overdue time", get('timing','t3_overdue')],
+    ["Emergency home contact", get('timing','t4_emergContact')],
+    ["Cancellation triggers", get('emergencyPlan','e4_cancel')],
+    ["Equipment summary", equip]
+  ];
+  const fn = "Activity_Plan.docx";
+  const doc = new Document({ sections:[{ ...makeHeaderFooter(fn),
+    children:[ ...titleBlock("Activity Plan", plan), buildTable(rows) ] }] });
+  return downloadDoc(doc, fn);
+}
+
+function generateRiskAssessment(plan){
+  const { Document } = dx();
+  const hazards = (plan.sections.safety && plan.sections.safety.hazards) || [];
+  const rows = hazards.map(h => [
+    h.hazard, h.zone || '', h.initial_risk || '',
+    Array.isArray(h.controls) ? h.controls.join('; ') : (h.controls || ''),
+    h.residual_risk || ''
+  ]);
+  if(rows.length === 0) rows.push(["No hazards recorded","","","",""]);
+  const fn = "Risk_Assessment.docx";
+  const doc = new Document({ sections:[{ ...makeHeaderFooter(fn),
+    children:[ ...titleBlock("Risk Assessment", plan),
+      buildTable(rows, ["Hazard","Zone","Initial Risk","Controls","Residual Risk"]) ] }] });
+  return downloadDoc(doc, fn);
+}
+
+function generateEmergencyPlan(plan){
+  const { Document, Paragraph, TextRun } = dx();
+  const s = plan.sections;
+  const get = (sec,f) => (s[sec] && s[sec][f]) || '';
+  let steps = (get('emergencyPlan','e3_steps') || '').split('\n').filter(x=>x.trim());
+  const devices = get('emergencyPlan','e5_commsDevices');
+  const children = [ ...titleBlock("Emergency Action Plan", plan) ];
+  children.push(new Paragraph({ children:[ new TextRun({ text:"Emergency action steps", bold:true, size:26, color:"6B2D8B" }) ] }));
+  if(steps.length === 0) steps = ["Make scene safe", "Call 000", "Provide first aid", "Contact emergency home contact", "Contact leader"];
+  steps.forEach((st,i) => children.push(new Paragraph({ children:[ new TextRun({ text:(i+1)+". "+st }) ] })));
+  children.push(new Paragraph({ text:"" }));
+  const rows = [
+    ["Nearest hospital", get('emergencyPlan','e1_hospital')],
+    ["Nearest police", get('emergencyPlan','e2_police')],
+    ["Emergency home contact", get('timing','t4_emergContact')],
+    ["Overdue time", get('timing','t3_overdue')],
+    ["Communication devices", Array.isArray(devices) ? devices.join(', ') : devices],
+    ["Cancellation triggers", get('emergencyPlan','e4_cancel')]
+  ];
+  children.push(buildTable(rows));
+  const fn = "Emergency_Action_Plan.docx";
+  const doc = new Document({ sections:[{ ...makeHeaderFooter(fn), children }] });
+  return downloadDoc(doc, fn);
+}
+
+function generatePackingList(plan){
+  const { Document } = dx();
+  const items = (plan.sections.equipment && plan.sections.equipment.selectedItems) || [];
+  const rows = items.map(i => [i.item, i.category]);
+  if(rows.length === 0) rows.push(["No items selected",""]);
+  const fn = "Packing_List.docx";
+  const doc = new Document({ sections:[{ ...makeHeaderFooter(fn),
+    children:[ ...titleBlock("Packing List", plan), buildTable(rows, ["Item","Category"]) ] }] });
+  return downloadDoc(doc, fn);
+}
+
+function generateMenuWater(plan){
+  const { Document } = dx();
+  const s = plan.sections;
+  const get = (sec,f) => (s[sec] && s[sec][f]) || '';
+  const rows = [
+    ["Meals", get('menuWater','m1_meals')],
+    ["Water plan", get('menuWater','m2_water')],
+    ["Dietary needs & allergies", get('menuWater','m3_dietary')],
+    ["Estimated cost per person", get('menuWater','m4_cost') ? "$"+get('menuWater','m4_cost') : '']
+  ];
+  const fn = "Menu_Water_Plan.docx";
+  const doc = new Document({ sections:[{ ...makeHeaderFooter(fn),
+    children:[ ...titleBlock("Menu & Water Plan", plan), buildTable(rows) ] }] });
+  return downloadDoc(doc, fn);
+}
+
+function generateAllDocs(plan){
+  if(!window.docx){ alert("Document library is still loading — please try again in a moment."); return; }
+  generateActivityPlan(plan)
+    .then(()=> new Promise(r=>setTimeout(r,600)))
+    .then(()=> generateRiskAssessment(plan))
+    .then(()=> new Promise(r=>setTimeout(r,600)))
+    .then(()=> generateEmergencyPlan(plan))
+    .then(()=> new Promise(r=>setTimeout(r,600)))
+    .then(()=> generatePackingList(plan))
+    .then(()=> new Promise(r=>setTimeout(r,600)))
+    .then(()=> generateMenuWater(plan))
+    .catch(err => { console.error(err); alert("Something went wrong generating documents: " + err.message); });
+}
+
+/* ============================================================
+   Build a fresh plan, optionally seeded from a library template
+   ============================================================ */
+function emptySections(){
+  return { activityInfo:{}, participants:{}, supervision:{}, location:{}, timing:{}, safety:{},
+    emergencyPlan:{}, equipment:{}, menuWater:{}, transport:{}, comms:{}, leadership:{}, environment:{}, review:{} };
+}
+
+function newPlan(type){
+  const now = new Date().toISOString();
+  const sections = emptySections();
+  sections.activityInfo.s1_group = "1st Jerrabomberra Scout Group";
+  return { id: generateId(), activityType: type, title:'', createdAt: now, updatedAt: now,
+    activityDate:'', sections, completedSections:[], percentComplete:0, status:'draft' };
+}
+
+function planFromTemplate(act){
+  const now = new Date().toISOString();
+  const sections = emptySections();
+  const ai = sections.activityInfo;
+  ai.s1_name = act.title; ai.s1_group = "1st Jerrabomberra Scout Group"; ai.s1_dates = act.date || '';
+  ai.s1_season = act.weather && act.weather.season;
+  if(act.location){
+    sections.location.l1_name = act.location.name || '';
+    sections.location.l2_start = act.location.start_point || '';
+    sections.location.l3_finish = act.location.finish_point || '';
+    sections.location.l5_tenure = act.location.park || act.location.tenure || '';
+    sections.location.l7_safeHavens = (act.safe_havens||[]).join('\n');
+  }
+  if(act.participants){
+    sections.participants.p1_youthCount = act.participants.youth_count;
+    sections.participants.p4_leaderCount = act.participants.leader_count;
+    sections.participants.p2_oasStage = act.oas_stage;
+  }
+  sections.supervision.sv1_type = (act.supervision||'').toLowerCase().includes('indirect') ?
+    "Indirect — leader nearby but you work independently" : "Direct — leader right beside you";
+  if(act.comms){ sections.comms.c1_primary = act.comms.primary || ''; sections.comms.c2_alternate = act.comms.alternate || ''; }
+  if(act.menu){ sections.menuWater.m1_meals = act.menu.meals || ''; sections.menuWater.m2_water = act.menu.water_plan || ''; }
+  sections.emergencyPlan.e1_hospital = act.hospital || '';
+  sections.emergencyPlan.e4_cancel = (act.cancellation_triggers||[]).join(', ');
+
+  const zones = ZONES[act.type] || ZONES.hike;
+  const hazardState = {};
+  (act.hazards||[]).forEach(h => {
+    const hl = h.hazard.toLowerCase();
+    let zone = zones[zones.length-1].label;
+    for(const z of zones){ const kws = ZONE_KEYWORDS[z.label]||[]; if(kws.some(k=>hl.includes(k))){ zone = z.label; break; } }
+    const key = zone + '|' + h.hazard;
+    hazardState[key] = { hazard:h.hazard, zone, status:'yes', initial_risk:h.initial_risk||'MEDIUM',
+      controls:(h.controls||[]).join('\n'), residual_risk:h.residual_risk||'LOW', libInitial:h.initial_risk };
+  });
+  sections.safety.hazardState = hazardState;
+  sections.safety.hazards = Object.values(hazardState).map(h => ({ hazard:h.hazard, zone:h.zone, status:h.status,
+    initial_risk:h.initial_risk, controls:h.controls, residual_risk:h.residual_risk }));
+
+  const pl = LIBRARY_DATA.packing_lists[act.type] || [];
+  sections.equipment.selectedItems = pl.filter(p=>p.category==='essential').map(p=>({ item:p.item, category:p.category, weight:p.weight, emoji:p.emoji, selected:true }));
+
+  const base = { id: generateId(), activityType: act.type, title: act.title, createdAt: now, updatedAt: now,
+    activityDate: act.date || '', sections, completedSections:[], percentComplete:0, status:'draft' };
+  const { completed, percent } = computePercent(base);
+  base.completedSections = completed; base.percentComplete = percent;
+  return base;
+}
+
+/* ============================================================
+   18. APP
+   ============================================================ */
+function App(){
+  const [screen, setScreen] = useState('dashboard');
+  const [plans, setPlans] = useState(() => loadPlans());
+  const [currentPlan, setCurrentPlan] = useState(null);
+
+  useEffect(() => { savePlans(plans); }, [plans]);
+
+  function upsertPlan(updated){
+    setPlans(prev => {
+      const exists = prev.some(p => p.id === updated.id);
+      return exists ? prev.map(p => p.id === updated.id ? updated : p) : [updated, ...prev];
+    });
+  }
+
+  function setWizardPlan(updater){
+    setCurrentPlan(prev => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      upsertPlan(next);
+      return next;
+    });
+  }
+
+  function startNew(type){
+    const p = newPlan(type);
+    setCurrentPlan(p); upsertPlan(p); setScreen('wizard');
+  }
+  function useTemplate(act){
+    const p = planFromTemplate(act);
+    setCurrentPlan(p); upsertPlan(p); setScreen('wizard');
+  }
+  function openPlan(p){ setCurrentPlan(p); setScreen('planDetail'); }
+  function deletePlan(){
+    setPlans(prev => prev.filter(p => p.id !== currentPlan.id));
+    setCurrentPlan(null); setScreen('dashboard');
+  }
+  function approvePlan(){
+    const updated = { ...currentPlan, status:'approved', updatedAt:new Date().toISOString() };
+    setCurrentPlan(updated); upsertPlan(updated);
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-100 pb-12">
+      <Header screen={screen}
+        onHome={()=>setScreen('dashboard')}
+        onLibrary={()=>setScreen('library')} />
+
+      {screen === 'dashboard' &&
+        <Dashboard plans={plans} onNew={()=>setScreen('newPlan')} onOpen={openPlan} />}
+
+      {screen === 'newPlan' &&
+        <NewPlan onPick={startNew} onCancel={()=>setScreen('dashboard')} />}
+
+      {screen === 'wizard' && currentPlan &&
+        <Wizard plan={currentPlan} setPlan={setWizardPlan}
+          onExit={()=>setScreen('planDetail')} onExport={generateAllDocs} />}
+
+      {screen === 'library' &&
+        <LibraryScreen onUseTemplate={useTemplate} />}
+
+      {screen === 'planDetail' && currentPlan &&
+        <PlanDetail plan={currentPlan}
+          onEdit={()=>setScreen('wizard')}
+          onExport={generateAllDocs}
+          onDelete={deletePlan}
+          onApprove={approvePlan}
+          onBack={()=>setScreen('dashboard')} />}
+
+      <PolicyBanner />
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
