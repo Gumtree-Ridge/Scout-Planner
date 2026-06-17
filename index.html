@@ -456,17 +456,25 @@ const WIZARD_SECTIONS = [
     id:"menuWater", number:9, label:"Menu & Water",
     intro:"An army marches on its stomach — what's on the menu?",
     fields:[
-      {id:"m1_meals", label:"List all the meals you'll provide", type:"textarea",
-        hint:"Include every meal, day by day — breakfast, lunch, dinner and snacks. Plan one extra meal as a backup."},
+      {id:"m1_meals", label:"List all the meals you'll provide — be specific!", type:"textarea",
+        placeholder:"e.g.\nDay 1: Lunch — peanut butter wraps, apple, muesli bar\nDay 1: Dinner — pasta bolognese with garlic bread, hot chocolate\nDay 2: Breakfast — instant oats with honey, tea/coffee\nDay 2: Lunch — crackers and cheese, trail mix\nSnacks — Shapes, nuts, dried fruit\nBackup meal — 2-minute noodles",
+        hint:"List every meal day by day and say exactly what the food is — not just 'breakfast' but what IS breakfast. Include snacks and always plan one backup emergency meal."},
       {id:"m2_water", label:"What is your water plan?", type:"textarea",
         hint:"How much water will each person carry? Where will you top up? Do you need a water filter or purification tablets?"},
       {id:"m3_dietary", label:"Are there any dietary needs or allergies in the group?", type:"textarea"},
       {id:"m4_cost", label:"What is the estimated cost per person?", type:"number",
-        hint:"Include food, transport, entry fees and any hire gear"}
+        hint:"Include food, transport, entry fees and any hire gear"},
+      {id:"m5_shopping_reminder", label:"", type:"info_box",
+        content:"🛒 Shopping list reminder: Once your leader has approved your plan and menu, you'll need to build a detailed shopping list and purchase everything within your approved budget. Don't buy anything until your plan is signed off!"}
     ]
   },
   {
-    id:"transport", number:10, label:"Transport",
+    id:"budget", number:10, label:"Budget",
+    intro:"Let's think through how much this adventure will cost. Fill in the items that apply to your activity — delete any that don't.",
+    fields:[{id:"budget_scene", type:"budget_scene"}]
+  },
+  {
+    id:"transport", number:11, label:"Transport",
     intro:"How is everyone getting there and back?",
     fields:[
       {id:"tr1_method", label:"How are scouts getting to and from the activity?", type:"textarea",
@@ -478,7 +486,7 @@ const WIZARD_SECTIONS = [
     ]
   },
   {
-    id:"comms", number:11, label:"Communications",
+    id:"comms", number:12, label:"Communications",
     intro:"How will you stay in touch?",
     fields:[
       {id:"c1_primary", label:"What is your main way of communicating during the activity?", type:"text",
@@ -491,7 +499,7 @@ const WIZARD_SECTIONS = [
     ]
   },
   {
-    id:"leadership", number:12, label:"Leadership",
+    id:"leadership", number:13, label:"Leadership",
     intro:"Who's leading the way?",
     fields:[
       {id:"ld1_aaLeader", label:"Who is the Activity Leader (AA Leader)?", type:"text",
@@ -501,7 +509,7 @@ const WIZARD_SECTIONS = [
     ]
   },
   {
-    id:"environment", number:13, label:"Environment",
+    id:"environment", number:14, label:"Environment",
     intro:"Leave no trace — let's look after the bush!",
     fields:[
       {id:"en1_waste", label:"What is your waste management plan?", type:"textarea",
@@ -513,7 +521,7 @@ const WIZARD_SECTIONS = [
     ]
   },
   {
-    id:"review", number:14, label:"Review & Export",
+    id:"review", number:15, label:"Review & Export",
     intro:"Almost there! Let's check everything and export your documents.",
     fields:[{id:"review_summary", type:"review_summary"}]
   }
@@ -678,6 +686,7 @@ function sectionHasContent(plan, sectionId){
   const sec = (plan.sections && plan.sections[sectionId]) || {};
   if(sectionId === 'safety'){ return Array.isArray(sec.hazards) && sec.hazards.length > 0; }
   if(sectionId === 'equipment'){ return Array.isArray(sec.selectedItems) && sec.selectedItems.length > 0; }
+  if(sectionId === 'budget'){ return Array.isArray(sec.items) && sec.items.some(i => parseFloat(i.amount) > 0); }
   return Object.keys(sec).some(k => { const v = sec[k]; return v !== undefined && v !== '' && !(Array.isArray(v) && v.length===0); });
 }
 
@@ -1241,6 +1250,144 @@ function EquipmentRoomSection({ activityType, sectionData, onChange, plan }){
 }
 
 /* ============================================================
+   BUDGET PLANNING SECTION
+   ============================================================ */
+const DEFAULT_BUDGET_ITEMS = [
+  { id:'fuel',       label:'Petrol subsidy for drivers getting us there and back',         amount:'' },
+  { id:'food',       label:'Food — all meals and snacks for the trip',                      amount:'' },
+  { id:'gas',        label:'Gas canister for cooking stove',                                amount:'' },
+  { id:'emerg_meal', label:'Backup emergency meal (e.g. 2-minute noodles)',                amount:'' },
+  { id:'campsite',   label:'Campsite or camping area fees',                                 amount:'' },
+  { id:'park_entry', label:'National park or reserve entry fee (check — Namadgi is free)', amount:'' },
+  { id:'comms',      label:'Satellite messenger running cost (if used on your activity)',   amount:'' },
+  { id:'water_purif',label:'Water purification tablets or filter replacement',              amount:'' },
+  { id:'hire',       label:'Equipment hire (boats, ropes, packs, helmets etc.)',           amount:'' },
+  { id:'other',      label:'Any other costs specific to this activity',                    amount:'' },
+];
+
+function BudgetPlanningSection({ sectionData, onChange, plan }){
+  const numScouts = parseInt((plan.sections.participants && plan.sections.participants.p1_youthCount) || 0) || 0;
+
+  const initItems = () => {
+    if(sectionData.items && sectionData.items.length) return sectionData.items;
+    return DEFAULT_BUDGET_ITEMS.map(i => ({ ...i }));
+  };
+
+  const [items, setItems] = React.useState(initItems);
+  const [newLabel, setNewLabel] = React.useState('');
+
+  React.useEffect(() => {
+    const total = items.reduce((s,i) => s + (parseFloat(i.amount)||0), 0);
+    const contingency = Math.round(total * 0.10 * 100) / 100;
+    const grandTotal = Math.round((total + contingency) * 100) / 100;
+    const perScout = numScouts > 0 ? Math.ceil(grandTotal / numScouts / 5) * 5 : 0;
+    onChange({ items, subtotal: total, contingency, grandTotal, perScout });
+  }, [items, numScouts]);
+
+  function setAmount(id, val){
+    setItems(items.map(i => i.id === id ? { ...i, amount: val } : i));
+  }
+  function setLabel(id, val){
+    setItems(items.map(i => i.id === id ? { ...i, label: val } : i));
+  }
+  function removeItem(id){
+    setItems(items.filter(i => i.id !== id));
+  }
+  function addItem(){
+    if(!newLabel.trim()) return;
+    setItems([...items, { id:'custom-'+Date.now(), label:newLabel, amount:'' }]);
+    setNewLabel('');
+  }
+
+  const subtotal = items.reduce((s,i) => s + (parseFloat(i.amount)||0), 0);
+  const contingency = Math.round(subtotal * 0.10 * 100) / 100;
+  const grandTotal = Math.round((subtotal + contingency) * 100) / 100;
+  const perScout = numScouts > 0 ? Math.ceil(grandTotal / numScouts / 5) * 5 : null;
+
+  return (
+    <div>
+      <div className="rounded-xl p-3 mb-4 text-sm" style={{ backgroundColor:'#e0f2fe' }}>
+        💡 Fill in the dollar amount for each cost that applies to your activity. Delete any lines that don't apply. Add extra lines if you need to. Leave items at $0 if you're not sure — you can come back and update them.
+      </div>
+
+      <div className="space-y-2 mb-4">
+        {items.map(item => (
+          <div key={item.id} className="bg-white rounded-xl shadow-sm p-3 flex items-center gap-2">
+            <div className="flex-1 min-w-0">
+              <input
+                value={item.label}
+                onChange={e => setLabel(item.id, e.target.value)}
+                className="w-full text-sm font-medium border-0 p-0 focus:outline-none bg-transparent"
+                style={{ color: PURPLE }}
+              />
+            </div>
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <span className="text-sm text-gray-500">$</span>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                value={item.amount}
+                onChange={e => setAmount(item.id, e.target.value)}
+                placeholder="0"
+                className="w-20 border rounded p-1 text-sm text-right"
+              />
+            </div>
+            <button onClick={() => removeItem(item.id)}
+              className="text-gray-300 hover:text-red-400 font-bold flex-shrink-0 px-1">✕</button>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex gap-2 mb-6">
+        <input value={newLabel} onChange={e => setNewLabel(e.target.value)}
+          placeholder="Add another cost item..."
+          className="flex-1 border rounded-lg p-2 text-sm"
+          onKeyDown={e => e.key==='Enter' && addItem()} />
+        <button onClick={addItem}
+          className="px-4 py-2 rounded-lg font-bold text-sm"
+          style={{ backgroundColor: GOLD, color:'#000' }}>+ Add</button>
+      </div>
+
+      <div className="bg-white rounded-xl shadow p-4 mb-4">
+        <div className="font-bold mb-3" style={{ color: PURPLE }}>💰 Budget Summary</div>
+        <div className="space-y-2 text-sm">
+          <div className="flex justify-between border-b pb-2">
+            <span className="text-gray-600">Subtotal</span>
+            <span className="font-bold">${subtotal.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between border-b pb-2">
+            <span className="text-gray-600">Contingency (10% buffer — in case prices go up)</span>
+            <span className="font-bold">${contingency.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between text-base font-bold pt-1">
+            <span>Total estimated cost</span>
+            <span style={{ color: PURPLE }}>${grandTotal.toFixed(2)}</span>
+          </div>
+          {numScouts > 0 ? (
+            <div className="flex justify-between pt-2 border-t mt-2">
+              <span className="text-gray-600">Estimated cost per scout ({numScouts} scouts — rounded up to nearest $5)</span>
+              <span className="font-bold text-lg" style={{ color: BLUE }}>${perScout}</span>
+            </div>
+          ) : (
+            <div className="text-xs text-gray-400 pt-2 border-t mt-2">Fill in the number of scouts in Section 2 (Participants) to see the per-person cost.</div>
+          )}
+        </div>
+      </div>
+
+      <div className="rounded-xl p-4" style={{ backgroundColor:'#fef3c7' }}>
+        <div className="font-bold text-sm mb-1" style={{ color:'#92400e' }}>📋 Remember</div>
+        <ul className="text-sm text-gray-700 space-y-1">
+          <li className="flex gap-2"><span>•</span><span>This is an <b>estimate</b> — get your leader to check the numbers before you commit to anything.</span></li>
+          <li className="flex gap-2"><span>•</span><span>Once your plan and menu are approved, you'll build a detailed <b>shopping list</b> to work within this budget.</span></li>
+          <li className="flex gap-2"><span>•</span><span>Don't collect any money from scouts or buy anything until your leader has approved the plan.</span></li>
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
    12. REVIEW SUMMARY SECTION (Section 14)
    ============================================================ */
 function ReviewSummarySection({ plan, onExport }){
@@ -1385,6 +1532,12 @@ function WizardQuestion({ field, value, onChange, plan }){
           </div>
         );
       }
+      case 'info_box':
+        return (
+          <div className="rounded-lg p-3 text-sm flex gap-2" style={{ backgroundColor:'#fef3c7' }}>
+            <span>{field.content}</span>
+          </div>
+        );
       default:
         return null;
     }
@@ -1472,6 +1625,11 @@ function Wizard({ plan, setPlan, onExit, onExport }){
             return <RiskSceneSection key={f.id} activityType={plan.activityType}
               sectionData={plan.sections.safety || {}}
               onChange={data => updateSceneSection('safety', data)} />;
+          }
+          if(f.type === 'budget_scene'){
+            return <BudgetPlanningSection key={f.id}
+              sectionData={plan.sections.budget || {}} plan={plan}
+              onChange={data => updateSceneSection('budget', data)} />;
           }
           if(f.type === 'equipment_scene'){
             return <EquipmentRoomSection key={f.id} activityType={plan.activityType}
@@ -1799,7 +1957,7 @@ function generateAllDocs(plan){
    ============================================================ */
 function emptySections(){
   return { activityInfo:{}, participants:{}, supervision:{}, location:{}, timing:{}, safety:{},
-    emergencyPlan:{}, equipment:{}, menuWater:{}, transport:{}, comms:{}, leadership:{}, environment:{}, review:{} };
+    emergencyPlan:{}, equipment:{}, menuWater:{}, budget:{}, transport:{}, comms:{}, leadership:{}, environment:{}, review:{} };
 }
 
 function newPlan(type){
