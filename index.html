@@ -4,11 +4,10 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>1st Jerra Scout Planner</title>
-<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://unpkg.com/react@18.2.0/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.23.3/babel.min.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/docx@7.8.2/build/index.js"></script>
 <style>
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
   .scrollx::-webkit-scrollbar { height: 6px; }
@@ -1770,8 +1769,17 @@ function generateMenuWater(plan){
   return downloadDoc(doc, fn);
 }
 
+function loadDocx(cb){
+  if(window.docx) return cb();
+  const s = document.createElement('script');
+  s.src = 'https://cdn.jsdelivr.net/npm/docx@7.8.2/build/index.js';
+  s.onload = cb;
+  s.onerror = () => alert("Could not load document library. Please check your internet connection.");
+  document.head.appendChild(s);
+}
+
 function generateAllDocs(plan){
-  if(!window.docx){ alert("Document library is still loading — please try again in a moment."); return; }
+  loadDocx(() => {
   generateActivityPlan(plan)
     .then(()=> new Promise(r=>setTimeout(r,600)))
     .then(()=> generateRiskAssessment(plan))
@@ -1782,6 +1790,7 @@ function generateAllDocs(plan){
     .then(()=> new Promise(r=>setTimeout(r,600)))
     .then(()=> generateMenuWater(plan))
     .catch(err => { console.error(err); alert("Something went wrong generating documents: " + err.message); });
+  });
 }
 
 /* ============================================================
