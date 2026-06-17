@@ -954,7 +954,9 @@ function RiskSceneSection({ activityType, sectionData, onChange }){
     const hazards = Object.values(newHazardState)
       .filter(h => h.status === 'yes')
       .map(h => ({ hazard:h.hazard, zone:h.zone, status:h.status, initial_risk:h.initial_risk, controls:h.controls, residual_risk:h.residual_risk }));
-    onChange({ hazardState: newHazardState, hazards });
+    const residuals = hazards.map(h => h.residual_risk);
+    const overallRisk = residuals.includes('HIGH') ? 'HIGH' : residuals.includes('MEDIUM') ? 'MEDIUM' : hazards.length > 0 ? 'LOW' : 'Not assessed';
+    onChange({ hazardState: newHazardState, hazards, overallRisk });
   }
 
   function toggleZoneHazard(zone, lib){
@@ -1134,6 +1136,23 @@ function RiskSceneSection({ activityType, sectionData, onChange }){
       {/* Summary of all selected hazards */}
       {allSelectedHazards.length > 0 && (
         <div className="bg-white rounded-xl shadow p-4">
+          {/* Overall Risk Rating */}
+          {(() => {
+            const residuals = allSelectedHazards.map(h => h.residual_risk);
+            let overall, overallBg, overallText, overallEmoji;
+            if(residuals.includes('HIGH')){ overall='HIGH'; overallBg='#fee2e2'; overallText='#dc2626'; overallEmoji='🔴'; }
+            else if(residuals.includes('MEDIUM')){ overall='MEDIUM'; overallBg='#fef3c7'; overallText='#b45309'; overallEmoji='🟡'; }
+            else { overall='LOW'; overallBg='#dcfce7'; overallText='#16a34a'; overallEmoji='🟢'; }
+            return (
+              <div className="flex items-center gap-3 mb-4 p-3 rounded-xl" style={{ backgroundColor: overallBg }}>
+                <span className="text-2xl">{overallEmoji}</span>
+                <div>
+                  <div className="text-xs text-gray-500 font-medium">Overall Residual Risk Rating</div>
+                  <div className="text-lg font-bold" style={{ color: overallText }}>{overall}</div>
+                </div>
+              </div>
+            );
+          })()}
           <div className="font-bold mb-3 text-sm" style={{ color: PURPLE }}>📋 Your Risk Assessment so far ({allSelectedHazards.length} hazards)</div>
           <div className="space-y-1">
             {allSelectedHazards.map((h, i) => {
@@ -1268,35 +1287,42 @@ const DEFAULT_BUDGET_ITEMS = [
 function BudgetPlanningSection({ sectionData, onChange, plan }){
   const numScouts = parseInt((plan.sections.participants && plan.sections.participants.p1_youthCount) || 0) || 0;
 
-  const initItems = () => {
+  const [items, setItems] = React.useState(() => {
     if(sectionData.items && sectionData.items.length) return sectionData.items;
     return DEFAULT_BUDGET_ITEMS.map(i => ({ ...i }));
-  };
-
-  const [items, setItems] = React.useState(initItems);
+  });
   const [newLabel, setNewLabel] = React.useState('');
 
-  React.useEffect(() => {
-    const total = items.reduce((s,i) => s + (parseFloat(i.amount)||0), 0);
+  function saveToParent(newItems){
+    const total = newItems.reduce((s,i) => s + (parseFloat(i.amount)||0), 0);
     const contingency = Math.round(total * 0.10 * 100) / 100;
     const grandTotal = Math.round((total + contingency) * 100) / 100;
     const perScout = numScouts > 0 ? Math.ceil(grandTotal / numScouts / 5) * 5 : 0;
-    onChange({ items, subtotal: total, contingency, grandTotal, perScout });
-  }, [items, numScouts]);
+    onChange({ items: newItems, subtotal: total, contingency, grandTotal, perScout });
+  }
 
   function setAmount(id, val){
-    setItems(items.map(i => i.id === id ? { ...i, amount: val } : i));
+    const next = items.map(i => i.id === id ? { ...i, amount: val } : i);
+    setItems(next);
+    saveToParent(next);
   }
   function setLabel(id, val){
     setItems(items.map(i => i.id === id ? { ...i, label: val } : i));
   }
+  function saveLabel(id){
+    saveToParent(items);
+  }
   function removeItem(id){
-    setItems(items.filter(i => i.id !== id));
+    const next = items.filter(i => i.id !== id);
+    setItems(next);
+    saveToParent(next);
   }
   function addItem(){
     if(!newLabel.trim()) return;
-    setItems([...items, { id:'custom-'+Date.now(), label:newLabel, amount:'' }]);
+    const next = [...items, { id:'custom-'+Date.now(), label:newLabel, amount:'' }];
+    setItems(next);
     setNewLabel('');
+    saveToParent(next);
   }
 
   const subtotal = items.reduce((s,i) => s + (parseFloat(i.amount)||0), 0);
@@ -1317,6 +1343,7 @@ function BudgetPlanningSection({ sectionData, onChange, plan }){
               <input
                 value={item.label}
                 onChange={e => setLabel(item.id, e.target.value)}
+                onBlur={() => saveLabel(item.id)}
                 className="w-full text-sm font-medium border-0 p-0 focus:outline-none bg-transparent"
                 style={{ color: PURPLE }}
               />
@@ -1860,19 +1887,67 @@ function generateActivityPlan(plan){
   return downloadDoc(doc, fn);
 }
 
+function riskShadeColor(level){
+  if(level === 'HIGH') return 'FF0000';
+  if(level === 'MEDIUM') return 'FFC000';
+  if(level === 'LOW') return '00B050';
+  return 'FFFFFF';
+}
+
 function generateRiskAssessment(plan){
-  const { Document } = dx();
+  const { Document, Table, TableRow, TableCell, Paragraph, TextRun, WidthType, BorderStyle } = dx();
   const hazards = (plan.sections.safety && plan.sections.safety.hazards) || [];
-  const rows = hazards.map(h => [
-    h.hazard, h.zone || '', h.initial_risk || '',
-    Array.isArray(h.controls) ? h.controls.join('; ') : (h.controls || ''),
-    h.residual_risk || ''
-  ]);
-  if(rows.length === 0) rows.push(["No hazards recorded","","","",""]);
+  const overallRisk = (plan.sections.safety && plan.sections.safety.overallRisk) || 'Not assessed';
+
+  const border = { style: BorderStyle.SINGLE, size:1, color:"CCCCCC" };
+  const borders = { top:border, bottom:border, left:border, right:border, insideHorizontal:border, insideVertical:border };
+
+  function riskCell(text, shade){
+    return new TableCell({
+      shading: { fill: shade },
+      children: [ new Paragraph({ children:[ new TextRun({ text: String(text==null?'':text), bold: true, color: text==='HIGH'?'FFFFFF':'000000' }) ] }) ]
+    });
+  }
+
+  function plainCell(text, shade){
+    return new TableCell({
+      shading: shade ? { fill: shade } : undefined,
+      children: [ new Paragraph({ children:[ new TextRun({ text: String(text==null?'':text) }) ] }) ]
+    });
+  }
+
+  const trs = [];
+  // Header row
+  trs.push(new TableRow({ tableHeader:true, children: ["Hazard","Zone","Initial Risk","Controls","Residual Risk"].map(h => shadedCell(h, { bold:true, shade:"6B2D8B" })) }));
+
+  // Overall risk row
+  const overallShade = riskShadeColor(overallRisk);
+  trs.push(new TableRow({ children: [
+    new TableCell({ columnSpan:4, shading:{ fill:"E0E0E0" }, children:[new Paragraph({ children:[new TextRun({ text:"Overall Residual Risk Rating", bold:true })] })] }),
+    riskCell(overallRisk, overallShade)
+  ]}));
+
+  if(hazards.length === 0){
+    trs.push(new TableRow({ children: [plainCell("No hazards recorded","FFFFFF"), plainCell("","FFFFFF"), plainCell("","FFFFFF"), plainCell("","FFFFFF"), plainCell("","FFFFFF")] }));
+  } else {
+    hazards.forEach((h, i) => {
+      const rowShade = i % 2 === 1 ? "F3F4F6" : "FFFFFF";
+      const initShade = riskShadeColor(h.initial_risk || '');
+      const residShade = riskShadeColor(h.residual_risk || '');
+      trs.push(new TableRow({ children: [
+        plainCell(h.hazard, rowShade),
+        plainCell(h.zone || '', rowShade),
+        riskCell(h.initial_risk || '', initShade),
+        plainCell(Array.isArray(h.controls) ? h.controls.join('; ') : (h.controls || ''), rowShade),
+        riskCell(h.residual_risk || '', residShade)
+      ]}));
+    });
+  }
+
   const fn = "Risk_Assessment.docx";
   const doc = new Document({ sections:[{ ...makeHeaderFooter(fn),
     children:[ ...titleBlock("Risk Assessment", plan),
-      buildTable(rows, ["Hazard","Zone","Initial Risk","Controls","Residual Risk"]) ] }] });
+      new Table({ width:{ size:100, type:WidthType.PERCENTAGE }, borders, rows: trs }) ] }] });
   return downloadDoc(doc, fn);
 }
 
@@ -2087,6 +2162,14 @@ function InstructionsScreen({ onBack }) {
               </li>
             ))}
           </ul>
+        </div>
+
+        {/* Route card / EAP note */}
+        <div className="rounded-2xl p-4 border-2" style={{ backgroundColor: '#fff7ed', borderColor: '#f97316' }}>
+          <div className="font-bold mb-2 text-base" style={{ color: '#c2410c' }}>📍 Important: Route Cards &amp; Emergency Action Plans</div>
+          <p className="text-sm text-gray-800">
+            Route card planning and emergency action plans (escape routes, emergency contacts, evacuation procedures) are <b>SEPARATE documents</b> to this activity planning tool. Ask your leader about these requirements.
+          </p>
         </div>
 
         {/* Back button */}
