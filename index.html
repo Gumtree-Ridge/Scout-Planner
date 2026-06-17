@@ -827,7 +827,6 @@ function TimelineStrip({ activityDate }){
    ============================================================ */
 function PlanCard({ plan, onOpen, onDelete }){
   const pct = plan.percentComplete || 0;
-  const statusColors = { draft:'#9ca3af', submitted: BLUE, approved:'#16a34a' };
   const at = ACTIVITY_TYPES.find(a => a.type === plan.activityType);
   return (
     <div onClick={() => onOpen(plan)}
@@ -842,8 +841,6 @@ function PlanCard({ plan, onOpen, onDelete }){
           </div>
         </div>
         <div className="flex items-center gap-1">
-          <span className="text-xs px-2 py-1 rounded-full text-white capitalize whitespace-nowrap"
-            style={{ backgroundColor: statusColors[plan.status] || '#9ca3af' }}>{plan.status}</span>
           <button onClick={e => { e.stopPropagation(); onDelete(plan.id); }} className="text-red-400 hover:text-red-600 font-bold px-1">✕</button>
         </div>
       </div>
@@ -1246,7 +1243,7 @@ function EquipmentRoomSection({ activityType, sectionData, onChange, plan }){
 /* ============================================================
    12. REVIEW SUMMARY SECTION (Section 14)
    ============================================================ */
-function ReviewSummarySection({ plan, onExport, onSubmit }){
+function ReviewSummarySection({ plan, onExport }){
   const { completed } = computePercent(plan);
   return (
     <div>
@@ -1267,12 +1264,12 @@ function ReviewSummarySection({ plan, onExport, onSubmit }){
 
       <div className="rounded-xl p-4 mb-4 text-white" style={{ background: HEADER_GRAD }}>
         <div className="font-bold text-lg">🎉 Great work, Scout!</div>
-        <p className="text-sm opacity-90">When you're happy with your plan, export your documents and send them to your leader for review.</p>
+        <p className="text-sm opacity-90 mt-1">You've built your activity safety plan! Now it's time to download your documents and get them to your leader.</p>
       </div>
 
       <div className="bg-white rounded-xl shadow p-4 mb-4">
-        <div className="font-bold mb-2" style={{ color: PURPLE }}>📄 Export your plan documents</div>
-        <p className="text-sm text-gray-600 mb-3">We'll create 5 Word documents you can print or email. They'll download one after another.</p>
+        <div className="font-bold mb-2" style={{ color: PURPLE }}>📄 Step 1 — Download your documents</div>
+        <p className="text-sm text-gray-600 mb-3">Click below to generate your 5 Word documents. They'll download one after another — check your Downloads folder.</p>
         <button onClick={onExport} className="px-5 py-2 rounded-full" style={{ backgroundColor: GOLD, color:'#000', fontWeight:'bold' }}>
           ⬇️ Generate all 5 Word documents
         </button>
@@ -1281,12 +1278,18 @@ function ReviewSummarySection({ plan, onExport, onSubmit }){
         </ul>
       </div>
 
-      <div className="bg-white rounded-xl shadow p-4">
-        <div className="font-bold mb-2" style={{ color: PURPLE }}>📨 Submit to your leader</div>
-        <p className="text-sm text-gray-600 mb-3">Mark this plan as submitted so your leader knows it's ready for review.</p>
-        <button onClick={onSubmit} className="px-5 py-2 rounded-full text-white font-bold" style={{ backgroundColor: BLUE }}>
-          Submit plan for review
-        </button>
+      <div className="bg-white rounded-xl shadow p-4 mb-4">
+        <div className="font-bold mb-2" style={{ color: PURPLE }}>📧 Step 2 — Email your leader</div>
+        <p className="text-sm text-gray-600 mb-2">Attach all 5 documents to an email and send them to your leader or mentoring guide for feedback and approval. Ask them to let you know if anything needs to be changed before the activity goes ahead.</p>
+        <div className="rounded-lg p-3 text-sm" style={{ backgroundColor:'#e0f2fe' }}>
+          💡 Not sure who to email? Ask your Section Leader or the Activity Leader listed in your plan.
+        </div>
+      </div>
+
+      <div className="rounded-xl p-4" style={{ backgroundColor:'#fef3c7' }}>
+        <div className="font-bold mb-2" style={{ color:'#92400e' }}>📁 Step 3 — Save everything to SharePoint</div>
+        <p className="text-sm text-gray-700 mb-2">Save your downloaded documents, any photos, and other evidence of your work to your folder on the <b>1st Jerrabomberra Scout Group SharePoint page</b>. This is how we keep a record of your OAS progress.</p>
+        <p className="text-sm text-gray-700">Not sure how to find or use SharePoint? <b>Ask a leader</b> — they'll show you where to save your files.</p>
       </div>
     </div>
   );
@@ -1477,8 +1480,7 @@ function Wizard({ plan, setPlan, onExit, onExport }){
           }
           if(f.type === 'review_summary'){
             return <ReviewSummarySection key={f.id} plan={plan}
-              onExport={() => onExport(plan)}
-              onSubmit={() => { setPlan(prev => ({ ...prev, status:'submitted', updatedAt:new Date().toISOString() })); onExit(); }} />;
+              onExport={() => onExport(plan)} />;
           }
           const v = (plan.sections[section.id] || {})[f.id];
           return <WizardQuestion key={f.id} field={f} value={v} plan={plan}
@@ -1564,7 +1566,7 @@ function LibraryScreen({ onUseTemplate }){
 /* ============================================================
    16. PLAN DETAIL
    ============================================================ */
-function PlanDetail({ plan, onEdit, onExport, onDelete, onBack, onApprove }){
+function PlanDetail({ plan, onEdit, onExport, onDelete, onBack }){
   const pct = plan.percentComplete || 0;
   const safety = plan.sections.safety || {};
   const equip = plan.sections.equipment || {};
@@ -1573,11 +1575,10 @@ function PlanDetail({ plan, onEdit, onExport, onDelete, onBack, onApprove }){
       <button onClick={onBack} className="text-sm mb-3" style={{ color: PURPLE }}>← Back to plans</button>
       <div className="rounded-xl p-5 text-white mb-4" style={{ background: HEADER_GRAD }}>
         <h1 className="text-2xl font-bold">{plan.title || 'Untitled plan'}</h1>
-        <div className="text-sm opacity-90 mt-1">{plan.activityType} · {formatDate(plan.activityDate)} · {pct}% complete · {plan.status}</div>
+        <div className="text-sm opacity-90 mt-1">{plan.activityType} · {formatDate(plan.activityDate)} · {pct}% complete</div>
         <div className="flex flex-wrap gap-2 mt-4">
           <button onClick={onEdit} className="px-4 py-2 rounded-full" style={{ backgroundColor: GOLD, color:'#000', fontWeight:'bold' }}>✏️ Continue editing</button>
           <button onClick={()=>onExport(plan)} className="px-4 py-2 rounded-full text-white font-bold" style={{ backgroundColor: BLUE }}>⬇️ Export documents</button>
-          {plan.status==='submitted' && <button onClick={onApprove} className="px-4 py-2 rounded-full text-white font-bold" style={{ backgroundColor:'#16a34a' }}>✅ Approve</button>}
         </div>
       </div>
 
@@ -2010,7 +2011,6 @@ function App(){
           onEdit={()=>setScreen('wizard')}
           onExport={generateAllDocs}
           onDelete={deletePlan}
-          onApprove={approvePlan}
           onBack={()=>setScreen('dashboard')} />}
 
       <PolicyBanner />
