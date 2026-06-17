@@ -16,7 +16,12 @@
 </style>
 </head>
 <body>
-<div id="root"></div>
+<div id="root"><div style="padding:20px;font-family:sans-serif">Loading Scout Planner... (if this stays here, check your internet connection)</div></div>
+<script>
+window.onerror = function(msg, src, line, col, err) {
+  document.getElementById('root').innerHTML = '<div style="padding:20px;font-family:sans-serif;color:red"><b>Error loading planner:</b><br>' + msg + '<br>Line: ' + line + '</div>';
+};
+</script>
 
 <script type="text/babel" data-presets="react">
 const { useState, useEffect, useMemo } = React;
