@@ -1490,90 +1490,99 @@ function WizardQuestion({ field, value, onChange, plan }){
 
   const inputClass = "w-full border rounded-lg p-2 focus:outline-none focus:ring-2";
 
-  function Field(){
-    switch(field.type){
-      case 'text':
-        return <input type="text" value={localVal} placeholder={field.placeholder||''}
-          onChange={e=>setLocalVal(e.target.value)}
-          onBlur={e=>onChange(e.target.value)} className={inputClass} />;
-      case 'number':
-        return <input type="number" value={localVal} placeholder={field.placeholder||''}
-          onChange={e=>setLocalVal(e.target.value)}
-          onBlur={e=>onChange(e.target.value)} className={inputClass} />;
-      case 'date':
-        return <input type="date" value={value||''} onChange={e=>onChange(e.target.value)} className={inputClass} />;
-      case 'time':
-        return <input type="time" value={value||''} onChange={e=>onChange(e.target.value)} className={inputClass} />;
-      case 'textarea':
-        return <textarea rows={4} value={localVal} placeholder={field.placeholder||''}
-          onChange={e=>setLocalVal(e.target.value)}
-          onBlur={e=>onChange(e.target.value)} className={inputClass} />;
-      case 'select':
-        return (
-          <select value={value||''} onChange={e=>onChange(e.target.value)} className={inputClass}>
-            <option value="">— Choose —</option>
-            {field.options.map(o => <option key={o} value={o}>{o}</option>)}
-          </select>
-        );
-      case 'yesno':
-        return (
-          <div className="flex gap-3">
+  let fieldJsx = null;
+  switch(field.type){
+    case 'text':
+      fieldJsx = <input type="text" value={localVal} placeholder={field.placeholder||''}
+        onChange={e=>setLocalVal(e.target.value)}
+        onBlur={e=>onChange(e.target.value)} className={inputClass} />;
+      break;
+    case 'number':
+      fieldJsx = <input type="number" value={localVal} placeholder={field.placeholder||''}
+        onChange={e=>setLocalVal(e.target.value)}
+        onBlur={e=>onChange(e.target.value)} className={inputClass} />;
+      break;
+    case 'date':
+      fieldJsx = <input type="date" value={value||''} onChange={e=>onChange(e.target.value)} className={inputClass} />;
+      break;
+    case 'time':
+      fieldJsx = <input type="time" value={value||''} onChange={e=>onChange(e.target.value)} className={inputClass} />;
+      break;
+    case 'textarea':
+      fieldJsx = <textarea rows={4} value={localVal} placeholder={field.placeholder||''}
+        onChange={e=>setLocalVal(e.target.value)}
+        onBlur={e=>onChange(e.target.value)} className={inputClass} />;
+      break;
+    case 'select':
+      fieldJsx = (
+        <select value={value||''} onChange={e=>onChange(e.target.value)} className={inputClass}>
+          <option value="">— Choose —</option>
+          {field.options.map(o => <option key={o} value={o}>{o}</option>)}
+        </select>
+      );
+      break;
+    case 'yesno':
+      fieldJsx = (
+        <div className="flex gap-3">
+          {['Yes','No'].map(o => (
+            <button key={o} onClick={()=>onChange(o)} type="button"
+              className="px-6 py-2 rounded-full font-bold border-2"
+              style={{ borderColor: value===o?BLUE:'#e5e7eb', backgroundColor: value===o?BLUE:'#fff', color: value===o?'#fff':'#000' }}>
+              {o==='Yes'?'✅ Yes':'❌ No'}
+            </button>
+          ))}
+        </div>
+      );
+      break;
+    case 'yesno+textarea': {
+      const v = value || {};
+      fieldJsx = (
+        <div>
+          <div className="flex gap-3 mb-2">
             {['Yes','No'].map(o => (
-              <button key={o} onClick={()=>onChange(o)} type="button"
+              <button key={o} onClick={()=>onChange({...v, answer:o})} type="button"
                 className="px-6 py-2 rounded-full font-bold border-2"
-                style={{ borderColor: value===o?BLUE:'#e5e7eb', backgroundColor: value===o?BLUE:'#fff', color: value===o?'#fff':'#000' }}>
+                style={{ borderColor: v.answer===o?BLUE:'#e5e7eb', backgroundColor: v.answer===o?BLUE:'#fff', color: v.answer===o?'#fff':'#000' }}>
                 {o==='Yes'?'✅ Yes':'❌ No'}
               </button>
             ))}
           </div>
-        );
-      case 'yesno+textarea': {
-        const v = value || {};
-        return (
-          <div>
-            <div className="flex gap-3 mb-2">
-              {['Yes','No'].map(o => (
-                <button key={o} onClick={()=>onChange({...v, answer:o})} type="button"
-                  className="px-6 py-2 rounded-full font-bold border-2"
-                  style={{ borderColor: v.answer===o?BLUE:'#e5e7eb', backgroundColor: v.answer===o?BLUE:'#fff', color: v.answer===o?'#fff':'#000' }}>
-                  {o==='Yes'?'✅ Yes':'❌ No'}
-                </button>
-              ))}
-            </div>
-            {v.answer === 'Yes' && (
-              <textarea rows={3} defaultValue={v.details||''} placeholder="Which permits or bookings? Add details here."
-                onBlur={e=>onChange({...v, details:e.target.value})} className={inputClass} />
-            )}
-          </div>
-        );
-      }
-      case 'checkboxes': {
-        const arr = Array.isArray(value) ? value : [];
-        return (
-          <div className="flex flex-wrap gap-2">
-            {field.options.map(o => {
-              const on = arr.includes(o);
-              return (
-                <button key={o} type="button"
-                  onClick={()=>onChange(on ? arr.filter(x=>x!==o) : [...arr, o])}
-                  className="px-3 py-2 rounded-full text-sm border-2 font-bold"
-                  style={{ borderColor: on?BLUE:'#e5e7eb', backgroundColor: on?'#e0f2fe':'#fff' }}>
-                  {on?'☑️ ':'⬜ '}{o}
-                </button>
-              );
-            })}
-          </div>
-        );
-      }
-      case 'info_box':
-        return (
-          <div className="rounded-lg p-3 text-sm flex gap-2" style={{ backgroundColor:'#fef3c7' }}>
-            <span>{field.content}</span>
-          </div>
-        );
-      default:
-        return null;
+          {v.answer === 'Yes' && (
+            <textarea rows={3} defaultValue={v.details||''} placeholder="Which permits or bookings? Add details here."
+              onBlur={e=>onChange({...v, details:e.target.value})} className={inputClass} />
+          )}
+        </div>
+      );
+      break;
     }
+    case 'checkboxes': {
+      const arr = Array.isArray(value) ? value : [];
+      fieldJsx = (
+        <div className="flex flex-wrap gap-2">
+          {field.options.map(o => {
+            const on = arr.includes(o);
+            return (
+              <button key={o} type="button"
+                onClick={()=>onChange(on ? arr.filter(x=>x!==o) : [...arr, o])}
+                className="px-3 py-2 rounded-full text-sm border-2 font-bold"
+                style={{ borderColor: on?BLUE:'#e5e7eb', backgroundColor: on?'#e0f2fe':'#fff' }}>
+                {on?'☑️ ':'⬜ '}{o}
+              </button>
+            );
+          })}
+        </div>
+      );
+      break;
+    }
+    case 'info_box':
+      fieldJsx = (
+        <div className="rounded-lg p-3 text-sm flex gap-2" style={{ backgroundColor:'#fef3c7' }}>
+          <span>{field.content}</span>
+        </div>
+      );
+      break;
+    default:
+      fieldJsx = null;
   }
 
   return (
@@ -1581,7 +1590,7 @@ function WizardQuestion({ field, value, onChange, plan }){
       <label className="block font-bold mb-2" style={{ color: PURPLE }}>
         {field.label} {field.required && <span style={{ color:'#dc2626' }}>*</span>}
       </label>
-      <Field />
+      {fieldJsx}
       {field.hint && (
         <div className="mt-2 text-sm rounded-lg p-2 flex gap-2" style={{ backgroundColor:'#fef3c7' }}>
           <span>💡</span><span>{field.hint}</span>
