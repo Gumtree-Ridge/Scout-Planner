@@ -65,7 +65,7 @@ const LIBRARY_DATA = {
         {hazard:"Waterway crossing on route",initial_risk:"HIGH",residual_risk:"MEDIUM",
           controls:["Recon all water features before crossing","No crossing moving water above knee","AA Leader supervises","Group supported formation"]},
         {hazard:"Pre-existing injury, illness or allergy (including anaphylaxis)",initial_risk:"HIGH",residual_risk:"MEDIUM",
-          controls:["Confirm all medical conditions via Operoo pre-departure","Action plans agreed with parents","EpiPen carried by participant and leader"]},
+          controls:["Confirm all medical conditions via Scout Hub pre-departure","Action plans agreed with parents","EpiPen carried by participant and leader"]},
         {hazard:"Bushfire from camp cooking",initial_risk:"HIGH",residual_risk:"MEDIUM",
           controls:["Hike stove safety refresher before use","1m clearance from flammable material","No stoves in tents"]}
       ]
@@ -366,8 +366,13 @@ const WIZARD_SECTIONS = [
       {id:"s1_type", label:"Activity type", type:"display"},
       {id:"s1_name", label:"What's the name of your activity?", type:"text", required:true,
         hint:"Give it a cool name — e.g. 'OAS Stage 4 Hike — Kambah Pool to Cotter Bend'"},
+      {id:"s1_desc", label:"What's this activity all about?", type:"textarea",
+        placeholder:"e.g. An overnight hike along the Murrumbidgee to practise our navigation and camp cooking skills for OAS Stage 4.",
+        hint:"In a sentence or two, describe what you'll be doing and why — so your leader instantly understands the activity. This goes on your Activity Plan."},
       {id:"s1_group", label:"What Scout Group are you from?", type:"text", default:"1st Jerrabomberra Scout Group"},
-      {id:"s1_dates", label:"When is the activity?", type:"date", required:true, hint:"This is used to build your planning timeline"},
+      {id:"s1_dates", label:"When does the activity start?", type:"date", required:true, hint:"This is used to build your planning timeline"},
+      {id:"s1_dateEnd", label:"When does it finish?", type:"date",
+        hint:"Leave this blank for a single-day activity. If it's an overnight or multi-day adventure, pick the last day — the tool will adjust your questions for a multi-day trip."},
       {id:"s1_mentor", label:"Who is your mentoring guide or supervising leader?", type:"text"}
     ]
   },
@@ -376,11 +381,17 @@ const WIZARD_SECTIONS = [
     intro:"Tell us about the people coming along.",
     fields:[
       {id:"p1_youthCount", label:"How many scouts are coming?", type:"number"},
+      {id:"p1a_youthNames", label:"Who are the scouts coming along?", type:"textarea",
+        placeholder:"One name per line, e.g.\nLiam T\nArie K\nMason B",
+        hint:"List each scout's name, one per line. Double-check the number above matches your list!"},
       {id:"p2_oasStage", label:"What OAS stage are most scouts at?", type:"select", options:[1,2,3,4,5,6,7],
         hint:"OAS (Outdoor Adventure Skills) is the Scouts Australia rating system — Stage 1 is beginner, Stage 7 is expert"},
       {id:"p3_specialNeeds", label:"Do any scouts have medical needs, disabilities or need extra support?", type:"textarea",
         hint:"Include allergies, medications, mobility needs — this stays private between you and your leader"},
       {id:"p4_leaderCount", label:"How many leaders will be there?", type:"number"},
+      {id:"p4a_leaderNames", label:"Which leaders are coming?", type:"textarea",
+        placeholder:"One name per line",
+        hint:"List each leader or adult helper by name, one per line."},
       {id:"p5_wwcc", label:"Do all leaders have a current Working With Children Check (WWCC)?", type:"yesno",
         hint:"A WWCC (Working With Children Check) is a government safety check that all scout leaders must have"}
     ]
@@ -528,19 +539,21 @@ const WIZARD_SECTIONS = [
 ];
 
 /* Zone definitions per activity type for the risk scene */
+const TRAVEL_ZONE = {label:"Travelling There",emoji:"🚌"};
 const ZONES = {
-  hike:[{label:"Scout Hall",emoji:"🏠"},{label:"Car Park",emoji:"🚗"},{label:"Trailhead",emoji:"🌲"},{label:"On the Trail",emoji:"🥾"},{label:"Camp",emoji:"🏕️"},{label:"Destination",emoji:"🏔️"}],
-  camp:[{label:"Scout Hall",emoji:"🏠"},{label:"Car Park",emoji:"🚗"},{label:"Campsite",emoji:"🏕️"},{label:"Activities Area",emoji:"🔥"}],
-  paddling:[{label:"Scout Hall",emoji:"🏠"},{label:"Car Park",emoji:"🚗"},{label:"Launch Point",emoji:"🚢"},{label:"On the Water",emoji:"💧"},{label:"Landing",emoji:"🏖️"}],
-  cycling:[{label:"Scout Hall",emoji:"🏠"},{label:"Car Park",emoji:"🚗"},{label:"On the Road/Trail",emoji:"🚴"},{label:"Destination",emoji:"🏁"}],
-  vertical:[{label:"Scout Hall",emoji:"🏠"},{label:"Car Park",emoji:"🚗"},{label:"Cliff Base",emoji:"🧗"},{label:"On the Cliff",emoji:"🪨"}],
-  swimming:[{label:"Scout Hall",emoji:"🏠"},{label:"Car Park",emoji:"🚗"},{label:"Water Entry",emoji:"🏊"},{label:"In the Water",emoji:"💧"}]
+  hike:[{label:"Scout Hall",emoji:"🏠"},{label:"Car Park",emoji:"🚗"},TRAVEL_ZONE,{label:"Trailhead",emoji:"🌲"},{label:"On the Trail",emoji:"🥾"},{label:"Camp",emoji:"🏕️"},{label:"Destination",emoji:"🏔️"}],
+  camp:[{label:"Scout Hall",emoji:"🏠"},{label:"Car Park",emoji:"🚗"},TRAVEL_ZONE,{label:"Campsite",emoji:"🏕️"},{label:"Activities Area",emoji:"🔥"}],
+  paddling:[{label:"Scout Hall",emoji:"🏠"},{label:"Car Park",emoji:"🚗"},TRAVEL_ZONE,{label:"Launch Point",emoji:"🚢"},{label:"On the Water",emoji:"💧"},{label:"Landing",emoji:"🏖️"}],
+  cycling:[{label:"Scout Hall",emoji:"🏠"},{label:"Car Park",emoji:"🚗"},TRAVEL_ZONE,{label:"On the Road/Trail",emoji:"🚴"},{label:"Destination",emoji:"🏁"}],
+  vertical:[{label:"Scout Hall",emoji:"🏠"},{label:"Car Park",emoji:"🚗"},TRAVEL_ZONE,{label:"Cliff Base",emoji:"🧗"},{label:"On the Cliff",emoji:"🪨"}],
+  swimming:[{label:"Scout Hall",emoji:"🏠"},{label:"Car Park",emoji:"🚗"},TRAVEL_ZONE,{label:"Water Entry",emoji:"🏊"},{label:"In the Water",emoji:"💧"}]
 };
 
 /* Keyword sets used to assign library hazards to zones */
 const ZONE_KEYWORDS = {
   "Scout Hall":["vehicle","car","park","transport","travel","driving"],
   "Car Park":["vehicle","car","park","transport","travel","driving","loading"],
+  "Travelling There":["vehicle","car","bus","transport","travel","driving","crash","seatbelt","fatigue"],
   "Trailhead":["lost","navigation","slip","trip","fall"],
   "On the Trail":["falling","slip","trip","lost","navigation","sunburn","dehydration","fauna","snake","weather","lightning","bushfire","waterway","crossing","terrain"],
   "On the Water":["drown","capsize","craft","swamp","collision","slip","trip","fall","weather","lightning"],
@@ -561,13 +574,19 @@ const ZONE_HAZARDS = {
   "Scout Hall": [
     { hazard: "Slips, trips and falls inside the hall", initial_risk: "LOW", residual_risk: "LOW", controls: ["Leaders supervise all movement", "Clear pathways of gear before moving"] },
     { hazard: "Gear not packed correctly — missing essential items", initial_risk: "MEDIUM", residual_risk: "LOW", controls: ["Packing checklist completed before departure", "Leader checks all packs"] },
-    { hazard: "Medical condition not disclosed by participant", initial_risk: "HIGH", residual_risk: "LOW", controls: ["Check Operoo medical records before activity", "Confirm medications are packed and accessible"] },
+    { hazard: "Medical condition not disclosed by participant", initial_risk: "HIGH", residual_risk: "LOW", controls: ["Check Scout Hub medical records before activity", "Confirm medications are packed and accessible"] },
     { hazard: "Participant not dropped off or picked up safely", initial_risk: "MEDIUM", residual_risk: "LOW", controls: ["Roll call before departure and on return", "Parent contact details confirmed"] },
   ],
   "Car Park": [
     { hazard: "Being struck by a moving vehicle", initial_risk: "HIGH", residual_risk: "LOW", controls: ["Assemble away from traffic flow", "Leader controls all movement in car park", "Walk — no running"] },
     { hazard: "Injury during loading or unloading of gear", initial_risk: "MEDIUM", residual_risk: "LOW", controls: ["Lift correctly — bend knees, straight back", "Ask for help with heavy items", "Leader supervises loading of trailers"] },
     { hazard: "Slips or falls on uneven car park surface", initial_risk: "LOW", residual_risk: "LOW", controls: ["Enclosed shoes required", "Watch for kerbs and drains"] },
+  ],
+  "Travelling There": [
+    { hazard: "Vehicle crash while travelling to or from the activity", initial_risk: "HIGH", residual_risk: "LOW", controls: ["All drivers licensed with registered, roadworthy vehicles", "Everyone wears a seatbelt — one person per seat", "Drivers plan the route before leaving and avoid driving tired", "Convoy plan shared so no vehicle is on its own"] },
+    { hazard: "Gear or trailer not secured properly during travel", initial_risk: "MEDIUM", residual_risk: "LOW", controls: ["All gear stowed or tied down before departure", "Trailer load checked by an adult before leaving", "Nothing loose inside the cabin"] },
+    { hazard: "A participant left behind at a stop or meeting point", initial_risk: "MEDIUM", residual_risk: "LOW", controls: ["Roll call before every departure — including rest stops", "Buddy system: everyone checks their buddy is on board", "Leader confirms head count with driver before moving off"] },
+    { hazard: "Vehicles or parents can't find the meeting or drop-off point", initial_risk: "LOW", residual_risk: "LOW", controls: ["Meeting point, address and time shared with all drivers and parents in writing", "Leader's mobile number shared in case anyone is lost or late"] },
   ],
   "Trailhead": [
     { hazard: "Group gets separated at the start", initial_risk: "MEDIUM", residual_risk: "LOW", controls: ["Roll call before leaving trailhead", "Buddy system confirmed and pairs announced"] },
@@ -580,7 +599,7 @@ const ZONE_HAZARDS = {
     { hazard: "Encounter with dangerous fauna — snake, spider or insect", initial_risk: "MEDIUM", residual_risk: "LOW", controls: ["Snake encounter safety brief before activity", "Snake bite bandage in personal first aid kit", "Insect repellent applied", "Appropriate clothing and long socks", "Check shoes before putting them on"] },
     { hazard: "Extreme weather — lightning, high winds or bushfire", initial_risk: "HIGH", residual_risk: "MEDIUM", controls: ["Check BOM forecast before activity", "Check Fires Near Me app", "Cancel if extreme fire danger", "Move to safe haven if severe weather develops", "Take shelter if lightning within 5km"] },
     { hazard: "Waterway or creek crossing", initial_risk: "HIGH", residual_risk: "MEDIUM", controls: ["Scout crossing point before the group commits", "No crossing moving water above knee height", "Leader supervises each crossing", "Group supported formation", "Unbuckle hip belt before crossing"] },
-    { hazard: "Pre-existing medical condition — allergy, asthma or injury", initial_risk: "HIGH", residual_risk: "MEDIUM", controls: ["All medical conditions confirmed via Operoo before departure", "Action plans agreed with parents", "Medications carried by participant AND a leader"] },
+    { hazard: "Pre-existing medical condition — allergy, asthma or injury", initial_risk: "HIGH", residual_risk: "MEDIUM", controls: ["All medical conditions confirmed via Scout Hub before departure", "Action plans agreed with parents", "Medications carried by participant AND a leader"] },
     { hazard: "Cold weather exposure or hypothermia", initial_risk: "MEDIUM", residual_risk: "LOW", controls: ["Warm layers and rain jacket packed", "Monitor participants for signs of cold", "Shelter from wind at rest stops"] },
   ],
   "Camp": [
@@ -654,6 +673,7 @@ const ZONE_HAZARDS = {
 const ZONE_PROMPTS = {
   "Scout Hall": ["Does everyone have the right gear packed for the activity?", "Are all medical conditions known by the leaders?", "Do you know the plan for everyone getting home safely after the activity?", "Have you done a roll call to confirm everyone is present?"],
   "Car Park": ["Where will parents drop off and pick up participants?", "Who is in charge of directing movement in the car park?", "How will you load heavy gear into vehicles or trailers safely?", "Is there a safe assembly point away from moving traffic?"],
+  "Travelling There": ["How is everyone getting from the meeting point to the activity — parent cars, bus, or something else?", "How long is the drive, and do you need a rest stop?", "Who has the list of which scout is in which vehicle?", "What happens if a vehicle breaks down or gets separated on the way?"],
   "Trailhead": ["Have you done a final head count before heading out?", "Does everyone know the route and what to do if they get separated?", "Has someone taken a grid reference of the start point?"],
   "On the Trail": ["What will you do if someone gets injured on the trail and can't walk out?", "What is your turn-back time if you're running behind schedule?", "How will you handle any creek or water crossings on the route?", "What is the weather forecast — including wind and any fire danger?", "What animals or plants might be dangerous at this location?"],
   "Camp": ["What are the fire and stove rules at this campsite?", "Who is the qualified first aider on camp?", "How will you store food safely — away from animals and insects?", "What is the plan if someone becomes unwell overnight?", "What are the boundaries scouts cannot go past without a leader?"],
@@ -702,6 +722,38 @@ function formatDate(iso){
   return d.toLocaleDateString('en-AU', { day:'numeric', month:'short', year:'numeric' });
 }
 
+/* How many days does the activity run? 1 = single day, null = no start date,
+   -1 = invalid (finish before start). */
+function activityDurationDays(plan){
+  const ai = (plan.sections && plan.sections.activityInfo) || {};
+  if(!ai.s1_dates) return null;
+  if(!ai.s1_dateEnd) return 1;
+  const d1 = new Date(ai.s1_dates), d2 = new Date(ai.s1_dateEnd);
+  if(isNaN(d1) || isNaN(d2)) return 1;
+  const days = Math.round((d2.getTime() - d1.getTime()) / (24*3600*1000)) + 1;
+  return days >= 1 ? days : -1;
+}
+
+/* Australian (southern hemisphere) seasons — derived from the activity date.
+   Dec–Feb = summer, Mar–May = autumn, Jun–Aug = winter, Sep–Nov = spring. */
+function seasonFromDate(dateStr){
+  if(!dateStr) return null;
+  const d = new Date(dateStr);
+  if(isNaN(d)) return null;
+  const m = d.getMonth(); // 0 = Jan
+  if(m === 11 || m <= 1) return 'summer';
+  if(m <= 4) return 'autumn';
+  if(m <= 7) return 'winter';
+  return 'spring';
+}
+
+const SEASON_TIPS = {
+  summer: "Aussie summer — pack extra water and sunscreen, plan shade breaks, and check the Fires Near Me app for fire danger before you go.",
+  autumn: "Autumn — warm days but cold nights. Pack layers and warm gear for camp, and check the forecast for early frosts.",
+  winter: "Aussie winter — cold, wet and short daylight hours. Pack warm layers, rain gear and a torch, and plan to finish walking well before dark.",
+  spring: "Spring — changeable weather and snakes are waking up. Pack layers, watch the forecast, and stick to tracks."
+};
+
 function riskColor(level){
   const l = (level||'').toUpperCase();
   if(l === 'LOW') return { bg:'#16a34a', text:'#fff', soft:'#dcfce7' };
@@ -712,7 +764,7 @@ function riskColor(level){
 
 const PURPLE = '#6B2D8B', DARKPURPLE = '#4B0D6B', GOLD = '#F5A800', BLUE = '#00A6FB';
 const HEADER_GRAD = 'linear-gradient(135deg, #6B2D8B 0%, #4B0D6B 100%)';
-const TODAY = new Date('2026-06-15');
+const TODAY = (() => { const d = new Date(); d.setHours(0,0,0,0); return d; })();
 
 function todayStr(){ return new Date().toLocaleDateString('en-AU', { day:'numeric', month:'short', year:'numeric' }); }
 
@@ -827,6 +879,20 @@ function TimelineStrip({ activityDate }){
           })}
         </svg>
       </div>
+      {(() => {
+        const daysToGo = Math.round((target.getTime() - TODAY.getTime()) / (24*3600*1000));
+        if(daysToGo < 0) return (
+          <div className="mt-2 text-xs font-bold rounded-lg px-3 py-2" style={{ backgroundColor:'#fee2e2', color:'#991b1b' }}>
+            ⚠️ This activity date has already passed. Check the date in Section 1 — or if the activity is done, ask your leader about closing it out.
+          </div>
+        );
+        if(daysToGo < 42) return (
+          <div className="mt-2 text-xs font-bold rounded-lg px-3 py-2" style={{ backgroundColor:'#fef3c7', color:'#92400e' }}>
+            ⏰ Only {daysToGo} day{daysToGo === 1 ? '' : 's'} to go — that's less than the 6–8 weeks adventurous activities need to plan properly. Talk to your leader today about whether there's enough time.
+          </div>
+        );
+        return null;
+      })()}
     </div>
   );
 }
@@ -915,7 +981,11 @@ function NewPlan({ onPick, onCancel }){
     <div className="max-w-5xl mx-auto px-4 py-6">
       <button onClick={onCancel} className="text-sm mb-4" style={{ color: PURPLE }}>← Back</button>
       <h1 className="text-2xl font-bold mb-1" style={{ color: PURPLE }}>What kind of adventure?</h1>
-      <p className="text-gray-600 mb-6">Pick the type of activity you're planning. We'll set up the right questions for you.</p>
+      <p className="text-gray-600 mb-4">Pick the type of activity you're planning. We'll set up the right questions for you.</p>
+      <a href="https://nsw.scouts.com.au/adventurous-activities/plan-activity/" target="_blank" rel="noopener noreferrer"
+        className="block rounded-xl p-4 mb-6 text-sm no-underline" style={{ backgroundColor:'#fef3c7', color:'#92400e' }}>
+        🧭 <b>First step for any adventurous activity:</b> check <u>"What Activities Can I Run?"</u> on the Scouts NSW website. It tells you what OAS stage participants need and what qualifications your supervising leader must have. Tap here to open it, then come back and start your plan.
+      </a>
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {ACTIVITY_TYPES.map(a => (
           <button key={a.type} onClick={() => onPick(a.type)}
@@ -943,9 +1013,17 @@ function libraryForType(type){
    10. RISK SCENE SECTION (Section 6)
    ============================================================ */
 function RiskSceneSection({ activityType, sectionData, onChange }){
-  const zones = ZONES[activityType] || ZONES.hike;
-  const [activeZone, setActiveZone] = useState(zones[0].label);
+  const baseZones = ZONES[activityType] || ZONES.hike;
+  const removedZones = sectionData.removedZones || [];
+  const customZones = sectionData.customZones || [];
+  const zones = baseZones.filter(z => !removedZones.includes(z.label)).concat(customZones);
+  const [activeZone, setActiveZone] = useState(zones[0] ? zones[0].label : '');
+  // If the active zone was just removed, fall back to the first remaining one
+  const curZone = zones.some(z => z.label === activeZone) ? activeZone : (zones[0] ? zones[0].label : '');
   const [showCustom, setShowCustom] = useState(false);
+  const [editKey, setEditKey] = useState(null);
+  const [showZoneMgr, setShowZoneMgr] = useState(false);
+  const [newZone, setNewZone] = useState({ label:'', emoji:'📍' });
   const [custom, setCustom] = useState({ hazard:'', initial:'MEDIUM', controls:'', residual:'LOW' });
 
   const hazardState = sectionData.hazardState || {};
@@ -959,26 +1037,86 @@ function RiskSceneSection({ activityType, sectionData, onChange }){
     onChange({ hazardState: newHazardState, hazards, overallRisk });
   }
 
+  function removeZone(label){
+    if(zones.length <= 1){ window.alert("You need at least one section in your risk assessment."); return; }
+    const included = Object.values(hazardState).filter(h => h.zone === label && h.status === 'yes').length;
+    if(included > 0 && !window.confirm('Removing "' + label + '" will also remove ' + included + ' hazard(s) you included there. Continue?')) return;
+    const nextHz = {};
+    Object.entries(hazardState).forEach(([k,h]) => { if(h.zone !== label) nextHz[k] = h; });
+    const hazards = Object.values(nextHz).filter(h => h.status === 'yes')
+      .map(h => ({ hazard:h.hazard, zone:h.zone, status:h.status, initial_risk:h.initial_risk, controls:h.controls, residual_risk:h.residual_risk }));
+    const residuals = hazards.map(h => h.residual_risk);
+    const overallRisk = residuals.includes('HIGH') ? 'HIGH' : residuals.includes('MEDIUM') ? 'MEDIUM' : hazards.length > 0 ? 'LOW' : 'Not assessed';
+    const isCustomZone = customZones.some(z => z.label === label);
+    onChange({ hazardState: nextHz, hazards, overallRisk,
+      removedZones: isCustomZone ? removedZones : [...removedZones, label],
+      customZones: isCustomZone ? customZones.filter(z => z.label !== label) : customZones });
+    if(activeZone === label && zones.length > 1){
+      const remaining = zones.filter(z => z.label !== label);
+      setActiveZone(remaining[0].label);
+    }
+  }
+
+  function restoreZone(label){
+    onChange({ removedZones: removedZones.filter(l => l !== label) });
+  }
+
+  function addZone(){
+    const name = newZone.label.trim();
+    if(!name) return;
+    if(zones.some(z => z.label.toLowerCase() === name.toLowerCase())){ window.alert("You already have a section with that name."); return; }
+    onChange({ customZones: [...customZones, { label: name, emoji: newZone.emoji }] });
+    setActiveZone(name);
+    setNewZone({ label:'', emoji:'📍' });
+    setShowZoneMgr(false);
+  }
+
   function toggleZoneHazard(zone, lib){
     const key = zone + '|' + lib.hazard;
     const next = { ...hazardState };
     const existing = next[key];
     const nowSelected = !(existing && existing.status === 'yes');
-    next[key] = {
-      hazard: lib.hazard, zone,
-      status: nowSelected ? 'yes' : 'no',
-      initial_risk: lib.initial_risk,
-      controls: (lib.controls || []).join('\n'),
-      residual_risk: lib.residual_risk,
-    };
+    if(existing){
+      // Keep any adjustments the scout already made — just flip inclusion
+      next[key] = { ...existing, status: nowSelected ? 'yes' : 'no' };
+    } else {
+      next[key] = {
+        hazard: lib.hazard, zone,
+        status: 'yes',
+        initial_risk: lib.initial_risk,
+        controls: (lib.controls || []).join('\n'),
+        residual_risk: lib.residual_risk,
+      };
+    }
+    if(!nowSelected && editKey === key) setEditKey(null);
     update(next);
+  }
+
+  function editHazard(key, field, value){
+    const next = { ...hazardState };
+    next[key] = { ...next[key], [field]: value };
+    update(next);
+  }
+
+  function resetHazard(key, lib){
+    const next = { ...hazardState };
+    next[key] = { ...next[key], initial_risk: lib.initial_risk,
+      controls: (lib.controls || []).join('\n'), residual_risk: lib.residual_risk };
+    update(next);
+  }
+
+  function isAdjusted(h, lib){
+    if(!h || !lib) return false;
+    return h.initial_risk !== lib.initial_risk
+      || h.residual_risk !== lib.residual_risk
+      || (h.controls || '') !== (lib.controls || []).join('\n');
   }
 
   function addCustom(){
     if(!custom.hazard.trim()) return;
     const key = 'custom:' + custom.hazard;
     const next = { ...hazardState };
-    next[key] = { hazard: custom.hazard, zone: activeZone, status:'yes',
+    next[key] = { hazard: custom.hazard, zone: curZone, status:'yes',
       initial_risk: custom.initial, controls: custom.controls, residual_risk: custom.residual, custom:true };
     update(next);
     setCustom({ hazard:'', initial:'MEDIUM', controls:'', residual:'LOW' });
@@ -997,9 +1135,9 @@ function RiskSceneSection({ activityType, sectionData, onChange }){
       .map(h => h.zone)
   );
 
-  const zoneHazards = ZONE_HAZARDS[activeZone] || [];
-  const customInZone = Object.entries(hazardState).filter(([k,h]) => h.custom && h.zone === activeZone && h.status === 'yes');
-  const prompts = ZONE_PROMPTS[activeZone] || [];
+  const zoneHazards = ZONE_HAZARDS[curZone] || [];
+  const customInZone = Object.entries(hazardState).filter(([k,h]) => h.custom && h.zone === curZone && h.status === 'yes');
+  const prompts = ZONE_PROMPTS[curZone] || [];
 
   const riskEmoji = { HIGH:'🔴', MEDIUM:'🟡', LOW:'🟢' };
   const riskBg = { HIGH:'#fee2e2', MEDIUM:'#fef3c7', LOW:'#dcfce7' };
@@ -1010,30 +1148,74 @@ function RiskSceneSection({ activityType, sectionData, onChange }){
   return (
     <div>
       {/* Zone tabs */}
-      <div className="overflow-x-auto scrollx -mx-1 mb-4">
+      <div className="overflow-x-auto scrollx -mx-1 mb-2">
         <div className="flex gap-2 px-1 pb-1">
           {zones.map(z => {
-            const active = z.label === activeZone;
+            const active = z.label === curZone;
             const reviewed = reviewedZones.has(z.label);
             return (
-              <button key={z.label} onClick={() => setActiveZone(z.label)}
-                className="flex-shrink-0 rounded-xl px-3 py-2 text-center border-2 min-w-[90px]"
+              <div key={z.label} onClick={() => setActiveZone(z.label)} role="button"
+                className="relative flex-shrink-0 rounded-xl px-3 py-2 text-center border-2 min-w-[90px] cursor-pointer"
                 style={{ borderColor: active ? BLUE : (reviewed ? '#16a34a' : '#e5e7eb'),
                   backgroundColor: active ? '#e0f2fe' : '#fff' }}>
+                <span onClick={e => { e.stopPropagation(); removeZone(z.label); }}
+                  title={"Remove " + z.label + " from this activity"}
+                  className="absolute top-0.5 right-1.5 text-xs text-gray-300 hover:text-red-500 font-bold">✕</span>
                 <div className="text-2xl">{z.emoji}</div>
                 <div className="text-xs font-bold" style={{ color: PURPLE }}>{z.label}</div>
                 {reviewed && <div className="text-[10px] text-green-600">✓ reviewed</div>}
-              </button>
+              </div>
             );
           })}
+          <div onClick={() => setShowZoneMgr(!showZoneMgr)} role="button"
+            className="flex-shrink-0 rounded-xl px-3 py-2 text-center border-2 border-dashed min-w-[90px] cursor-pointer flex flex-col justify-center"
+            style={{ borderColor: PURPLE, backgroundColor: showZoneMgr ? '#f3e8ff' : '#fff' }}>
+            <div className="text-2xl">➕</div>
+            <div className="text-xs font-bold" style={{ color: PURPLE }}>Add / restore</div>
+          </div>
         </div>
       </div>
+      <div className="text-xs text-gray-400 mb-3">Not part of YOUR trip? Tap the ✕ on a section to remove it — e.g. remove "Scout Hall" if you're meeting at the trailhead instead.</div>
+
+      {showZoneMgr && (
+        <div className="bg-white rounded-xl shadow p-4 mb-4 space-y-3 border-2" style={{ borderColor: PURPLE }}>
+          <div className="text-sm font-bold" style={{ color: PURPLE }}>🗺️ Customise your trip sections</div>
+          {removedZones.length > 0 && (
+            <div>
+              <div className="text-xs text-gray-500 mb-1">Bring back a removed section:</div>
+              <div className="flex flex-wrap gap-2">
+                {removedZones.map(l => {
+                  const bz = baseZones.find(z => z.label === l);
+                  return (
+                    <button key={l} onClick={() => restoreZone(l)}
+                      className="px-3 py-1 rounded-full border text-xs font-bold" style={{ borderColor:'#16a34a', color:'#16a34a' }}>
+                      ↩️ {bz ? bz.emoji + ' ' : ''}{l}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+          <div>
+            <div className="text-xs text-gray-500 mb-1">Or add your own section — anywhere your activity goes that isn't listed:</div>
+            <div className="flex gap-2 flex-wrap items-center">
+              <select value={newZone.emoji} onChange={e => setNewZone({ ...newZone, emoji: e.target.value })} className="border rounded p-1 text-xl">
+                {['📍','🚉','🌉','⛺','🏞️','🛶','🚏','🌊','🧗','🔦'].map(e2 => <option key={e2} value={e2}>{e2}</option>)}
+              </select>
+              <input value={newZone.label} onChange={e => setNewZone({ ...newZone, label: e.target.value })}
+                placeholder="e.g. Train Station, River Crossing, Lookout"
+                className="border rounded p-2 text-sm flex-1 min-w-[180px]" />
+              <button onClick={addZone} className="px-4 py-1 rounded-full font-bold text-sm" style={{ backgroundColor: GOLD, color:'#000' }}>Add section</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="text-sm font-bold mb-1" style={{ color: PURPLE }}>
         {reviewedZones.size} of {zones.length} zones reviewed
       </div>
       <div className="text-sm text-gray-600 mb-3">
-        Tap the hazards below that could happen at <b>{activeZone}</b> for your activity.
+        Tap the hazards below that could happen at <b>{curZone}</b> for your activity.
       </div>
 
       {/* Hazard tile grid */}
@@ -1042,27 +1224,68 @@ function RiskSceneSection({ activityType, sectionData, onChange }){
       )}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
         {zoneHazards.map((lib, i) => {
-          const key = activeZone + '|' + lib.hazard;
+          const key = curZone + '|' + lib.hazard;
           const h = hazardState[key] || {};
           const selected = h.status === 'yes';
-          const ir = lib.initial_risk || 'MEDIUM';
+          const ir = (selected && h.initial_risk) || lib.initial_risk || 'MEDIUM';
+          const adjusted = selected && isAdjusted(h, lib);
+          const editing = editKey === key;
           return (
-            <button key={i} onClick={() => toggleZoneHazard(activeZone, lib)}
-              className="text-left rounded-xl p-3 border-2 transition"
-              style={{ borderColor: selected ? riskBorder[ir] : '#e5e7eb',
-                backgroundColor: selected ? riskBg[ir] : '#fff' }}>
-              <div className="flex items-start gap-2">
-                <span className="text-xl flex-shrink-0">{riskEmoji[ir] || '🟡'}</span>
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-bold leading-tight" style={{ color: PURPLE }}>{lib.hazard}</div>
-                  <div className="text-xs text-gray-500 mt-1">Initial risk: {ir}</div>
-                  {selected
-                    ? <div className="text-xs font-bold mt-1" style={{ color: riskBorder[ir] }}>✅ Included</div>
-                    : <div className="text-xs text-gray-400 mt-1">Tap to include</div>
-                  }
+            <div key={i} className={editing ? 'sm:col-span-2' : ''}>
+              <div onClick={() => toggleZoneHazard(curZone, lib)} role="button"
+                className="text-left rounded-xl p-3 border-2 transition cursor-pointer"
+                style={{ borderColor: selected ? riskBorder[ir] : '#e5e7eb',
+                  backgroundColor: selected ? riskBg[ir] : '#fff' }}>
+                <div className="flex items-start gap-2">
+                  <span className="text-xl flex-shrink-0">{riskEmoji[ir] || '🟡'}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-bold leading-tight" style={{ color: PURPLE }}>{lib.hazard}</div>
+                    <div className="text-xs text-gray-500 mt-1">Initial risk: {ir}{adjusted && <span className="font-bold" style={{ color: PURPLE }}> · ✏️ adjusted by you</span>}</div>
+                    {selected
+                      ? <div className="flex items-center gap-3 mt-1">
+                          <span className="text-xs font-bold" style={{ color: riskBorder[ir] }}>✅ Included</span>
+                          <span onClick={e => { e.stopPropagation(); setEditKey(editing ? null : key); }}
+                            className="text-xs font-bold underline" style={{ color: PURPLE }}>
+                            {editing ? 'Close' : '✏️ Adjust rating & controls'}
+                          </span>
+                        </div>
+                      : <div className="text-xs text-gray-400 mt-1">Tap to include</div>
+                    }
+                  </div>
                 </div>
               </div>
-            </button>
+              {selected && editing && (
+                <div className="bg-white rounded-xl shadow p-4 mt-2 space-y-3 border-2" style={{ borderColor: PURPLE }}>
+                  <div className="text-xs text-gray-600">These are the <b>suggested</b> ratings and controls from past 1st Jerra activities — but every trip is different. Think about YOUR route, weather and group, then adjust if you need to.</div>
+                  <div className="flex gap-2 items-center text-sm flex-wrap">
+                    <label className="font-bold">Initial risk</label>
+                    <select value={h.initial_risk || 'MEDIUM'} onChange={e => editHazard(key, 'initial_risk', e.target.value)} className="border rounded p-1">
+                      {['LOW','MEDIUM','HIGH'].map(o => <option key={o}>{o}</option>)}
+                    </select>
+                    <label className="font-bold">Risk after controls</label>
+                    <select value={h.residual_risk || 'LOW'} onChange={e => editHazard(key, 'residual_risk', e.target.value)} className="border rounded p-1">
+                      {['LOW','MEDIUM','HIGH'].map(o => <option key={o}>{o}</option>)}
+                    </select>
+                  </div>
+                  {h.residual_risk === 'HIGH' && (
+                    <div className="rounded p-2 text-xs font-bold" style={{ backgroundColor:'#fee2e2', color:'#991b1b' }}>
+                      🛑 If the risk is still HIGH even with your controls, something about the activity probably needs to change. Talk to your leader before going any further.
+                    </div>
+                  )}
+                  <div>
+                    <label className="text-sm font-bold">How will you control this risk?</label>
+                    <textarea value={h.controls || ''} onChange={e => editHazard(key, 'controls', e.target.value)}
+                      rows={4} className="w-full border rounded p-2 text-sm mt-1"
+                      placeholder="One control per line" />
+                    <div className="text-xs text-gray-400 mt-1">Tip: add controls specific to YOUR activity — don't just accept the list.</div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => setEditKey(null)} className="px-4 py-1 rounded-full font-bold text-sm" style={{ backgroundColor: GOLD, color:'#000' }}>Done</button>
+                    {adjusted && <button onClick={() => resetHazard(key, lib)} className="px-4 py-1 rounded-full border text-sm">↩️ Reset to suggested</button>}
+                  </div>
+                </div>
+              )}
+            </div>
           );
         })}
       </div>
@@ -1070,15 +1293,49 @@ function RiskSceneSection({ activityType, sectionData, onChange }){
       {/* Custom hazards in this zone */}
       {customInZone.length > 0 && (
         <div className="mb-4 space-y-2">
-          {customInZone.map(([key, h]) => (
-            <div key={key} className="bg-white rounded-xl shadow p-3 border-l-4 flex items-start justify-between gap-2" style={{ borderColor: BLUE }}>
-              <div>
-                <div className="text-sm font-bold" style={{ color: PURPLE }}>⭐ {h.hazard}</div>
-                <div className="text-xs text-gray-500">Your specific risk · Initial: {h.initial_risk} → Residual: {h.residual_risk}</div>
+          {customInZone.map(([key, h]) => {
+            const editing = editKey === key;
+            return (
+              <div key={key}>
+                <div className="bg-white rounded-xl shadow p-3 border-l-4 flex items-start justify-between gap-2" style={{ borderColor: BLUE }}>
+                  <div>
+                    <div className="text-sm font-bold" style={{ color: PURPLE }}>⭐ {h.hazard}</div>
+                    <div className="text-xs text-gray-500">Your specific risk · Initial: {h.initial_risk} → Residual: {h.residual_risk}</div>
+                    <span onClick={() => setEditKey(editing ? null : key)}
+                      className="text-xs font-bold underline cursor-pointer" style={{ color: PURPLE }}>
+                      {editing ? 'Close' : '✏️ Adjust rating & controls'}
+                    </span>
+                  </div>
+                  <button onClick={() => removeCustom(key)} className="text-red-400 text-lg leading-none flex-shrink-0">✕</button>
+                </div>
+                {editing && (
+                  <div className="bg-white rounded-xl shadow p-4 mt-2 space-y-3 border-2" style={{ borderColor: PURPLE }}>
+                    <div className="flex gap-2 items-center text-sm flex-wrap">
+                      <label className="font-bold">Initial risk</label>
+                      <select value={h.initial_risk || 'MEDIUM'} onChange={e => editHazard(key, 'initial_risk', e.target.value)} className="border rounded p-1">
+                        {['LOW','MEDIUM','HIGH'].map(o => <option key={o}>{o}</option>)}
+                      </select>
+                      <label className="font-bold">Risk after controls</label>
+                      <select value={h.residual_risk || 'LOW'} onChange={e => editHazard(key, 'residual_risk', e.target.value)} className="border rounded p-1">
+                        {['LOW','MEDIUM','HIGH'].map(o => <option key={o}>{o}</option>)}
+                      </select>
+                    </div>
+                    {h.residual_risk === 'HIGH' && (
+                      <div className="rounded p-2 text-xs font-bold" style={{ backgroundColor:'#fee2e2', color:'#991b1b' }}>
+                        🛑 If the risk is still HIGH even with your controls, something about the activity probably needs to change. Talk to your leader before going any further.
+                      </div>
+                    )}
+                    <div>
+                      <label className="text-sm font-bold">How will you control this risk?</label>
+                      <textarea value={h.controls || ''} onChange={e => editHazard(key, 'controls', e.target.value)}
+                        rows={4} className="w-full border rounded p-2 text-sm mt-1" placeholder="One control per line" />
+                    </div>
+                    <button onClick={() => setEditKey(null)} className="px-4 py-1 rounded-full font-bold text-sm" style={{ backgroundColor: GOLD, color:'#000' }}>Done</button>
+                  </div>
+                )}
               </div>
-              <button onClick={() => removeCustom(key)} className="text-red-400 text-lg leading-none flex-shrink-0">✕</button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -1214,13 +1471,20 @@ function EquipmentRoomSection({ activityType, sectionData, onChange, plan }){
   const catColor = { essential:'#dc2626', recommended: GOLD, optional:'#16a34a' };
 
   const libAct = libraryForType(activityType)[0];
-  const season = (plan.sections.activityInfo && plan.sections.activityInfo.s1_season) || (libAct && libAct.weather && libAct.weather.season) || 'the season';
+  const ai = plan.sections.activityInfo || {};
+  // Season comes from the scout's own activity date first (Australian seasons),
+  // then any stored value, then the library example as a last resort.
+  const season = seasonFromDate(plan.activityDate || ai.s1_dates)
+    || ai.s1_season
+    || (libAct && libAct.weather && libAct.weather.season)
+    || 'the season';
   const loc = (plan.sections.location && plan.sections.location.l1_name) || (libAct && libAct.location && libAct.location.name) || 'your location';
 
   return (
     <div>
       <div className="rounded-xl p-3 mb-3 text-white text-sm" style={{ backgroundColor: BLUE }}>
         🌤️ Heads up: it'll be <b>{season}</b> around <b>{loc}</b>. Make sure you've packed weather-appropriate gear!
+        {SEASON_TIPS[season] && <div className="text-xs opacity-90 mt-1">{SEASON_TIPS[season]}</div>}
       </div>
       <div className="rounded-xl p-3 mb-4 text-center font-bold text-white" style={{ backgroundColor: weightColor }}>
         🎒 Estimated pack weight: {weight.toFixed(2)} kg
@@ -1659,6 +1923,51 @@ function Wizard({ plan, setPlan, onExit, onExport }){
         <div className="text-xs opacity-80">Section {section.number}</div>
         <h2 className="text-xl font-bold">{section.label}</h2>
         <p className="text-sm opacity-90 mt-1">{section.intro}</p>
+        {section.id === 'activityInfo' && (
+          <div className="mt-3 pt-3 border-t border-white border-opacity-30">
+            <a href="https://nsw.scouts.com.au/adventurous-activities/plan-activity/" target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-start gap-2 text-sm px-3 py-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition"
+              style={{ color: '#fff', textDecoration: 'none' }}>
+              🧭 Before you start: check "What Activities Can I Run?" on the Scouts NSW Plan an Activity page. It tells you what OAS stage you need to be and what qualifications your supervising leader needs for this type of activity.
+            </a>
+          </div>
+        )}
+        {section.id === 'activityInfo' && (() => {
+          const dur = activityDurationDays(plan);
+          if(dur === -1) return (
+            <div className="mt-2 rounded-lg px-3 py-2 text-sm font-bold" style={{ backgroundColor:'#fee2e2', color:'#991b1b' }}>
+              ⚠️ Your finish date is before your start date — check your dates!
+            </div>
+          );
+          if(dur > 1) return (
+            <div className="mt-2 rounded-lg px-3 py-2 text-sm" style={{ backgroundColor:'rgba(255,255,255,0.15)' }}>
+              🗓️ This is a <b>{dur}-day activity</b> ({dur-1} night{dur-1 === 1 ? '' : 's'}) — the tool will remind you about meals, overnight gear and camp arrangements for every day.
+            </div>
+          );
+          return null;
+        })()}
+        {section.id === 'menuWater' && (() => {
+          const dur = activityDurationDays(plan);
+          if(dur && dur > 1) return (
+            <div className="mt-3 pt-3 border-t border-white border-opacity-30 text-sm">
+              🗓️ Your activity runs <b>{dur} days ({dur-1} night{dur-1 === 1 ? '' : 's'})</b> — plan every breakfast, lunch and dinner for every day, plus snacks and one backup emergency meal.
+            </div>
+          );
+          return (
+            <div className="mt-3 pt-3 border-t border-white border-opacity-30 text-sm">
+              ☀️ Single-day activity — you probably just need lunch, snacks and plenty of water. Still plan a backup snack in case you're out longer than expected!
+            </div>
+          );
+        })()}
+        {section.id === 'equipment' && (() => {
+          const dur = activityDurationDays(plan);
+          if(dur && dur > 1) return (
+            <div className="mt-3 pt-3 border-t border-white border-opacity-30 text-sm">
+              🌙 Overnight trip — don't forget sleeping gear: tent, sleeping bag, mat and warm layers for {dur-1} night{dur-1 === 1 ? '' : 's'} out.
+            </div>
+          );
+          return null;
+        })()}
         {section.id === 'location' && (
           <div className="mt-3 pt-3 border-t border-white border-opacity-30">
             <a href="https://topo-route.mtbdeligt.workers.dev/" target="_blank" rel="noopener noreferrer"
@@ -1885,9 +2194,12 @@ function generateActivityPlan(plan){
   const equip = (s.equipment && s.equipment.selectedItems || []).map(i=>i.item).join(', ');
   const rows = [
     ["Activity title", plan.title || ''],
+    ["Activity description", get('activityInfo','s1_desc')],
     ["Scout Group", get('activityInfo','s1_group') || '1st Jerrabomberra Scout Group'],
     ["Activity type", plan.activityType],
-    ["Date", formatDate(plan.activityDate)],
+    ["Dates", get('activityInfo','s1_dateEnd') && get('activityInfo','s1_dateEnd') !== get('activityInfo','s1_dates')
+      ? formatDate(get('activityInfo','s1_dates')) + " to " + formatDate(get('activityInfo','s1_dateEnd'))
+      : formatDate(plan.activityDate)],
     ["Location", get('location','l1_name')],
     ["Start point", get('location','l2_start')],
     ["Finish point", get('location','l3_finish')],
@@ -1895,6 +2207,8 @@ function generateActivityPlan(plan){
     ["AA Leader", get('leadership','ld1_aaLeader')],
     ["Mentoring guide", get('activityInfo','s1_mentor')],
     ["Participants", get('participants','p1_youthCount') + " scouts, " + get('participants','p4_leaderCount') + " leaders"],
+    ["Scouts attending", get('participants','p1a_youthNames')],
+    ["Leaders attending", get('participants','p4a_leaderNames')],
     ["OAS stage", get('participants','p2_oasStage')],
     ["Supervision", get('supervision','sv1_type')],
     ["Primary comms", get('comms','c1_primary')],
@@ -2071,8 +2385,10 @@ function planFromTemplate(act){
   const now = new Date().toISOString();
   const sections = emptySections();
   const ai = sections.activityInfo;
-  ai.s1_name = act.title; ai.s1_group = "1st Jerrabomberra Scout Group"; ai.s1_dates = act.date || '';
-  ai.s1_season = act.weather && act.weather.season;
+  ai.s1_name = act.title; ai.s1_group = "1st Jerrabomberra Scout Group";
+  // Deliberately do NOT copy the old trip's date or season — the scout enters
+  // their own date and the season is derived from it (Australian seasons).
+  ai.s1_dates = '';
   if(act.location){
     sections.location.l1_name = act.location.name || '';
     sections.location.l2_start = act.location.start_point || '';
@@ -2110,7 +2426,7 @@ function planFromTemplate(act){
   sections.equipment.selectedItems = pl.filter(p=>p.category==='essential').map(p=>({ item:p.item, category:p.category, weight:p.weight, emoji:p.emoji, selected:true }));
 
   const base = { id: generateId(), activityType: act.type, title: act.title, createdAt: now, updatedAt: now,
-    activityDate: act.date || '', sections, completedSections:[], percentComplete:0, status:'draft' };
+    activityDate: '', sections, completedSections:[], percentComplete:0, status:'draft' };
   const { completed, percent } = computePercent(base);
   base.completedSections = completed; base.percentComplete = percent;
   return base;
