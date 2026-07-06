@@ -1801,6 +1801,19 @@ function BudgetPlanningSection({ sectionData, onChange, plan }){
 /* ============================================================
    12. REVIEW SUMMARY SECTION (Section 14)
    ============================================================ */
+function DocExportButtons({ plan, onExport }){
+  return (
+    <div className="flex flex-wrap gap-2">
+      {DOC_GENERATORS.map(d => (
+        <button key={d.key} type="button" onClick={() => onExport(plan, [d.key])}
+          className="px-3 py-2 rounded-full text-sm border-2 font-bold" style={{ borderColor: BLUE, color: BLUE }}>
+          {d.emoji} {d.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function ReviewSummarySection({ plan, onExport }){
   const { completed } = computePercent(plan);
   return (
@@ -1827,13 +1840,12 @@ function ReviewSummarySection({ plan, onExport }){
 
       <div className="bg-white rounded-xl shadow p-4 mb-4">
         <div className="font-bold mb-2" style={{ color: PURPLE }}>📄 Step 1 — Download your documents</div>
-        <p className="text-sm text-gray-600 mb-3">Click below to generate your 5 Word documents. They'll download one after another — check your Downloads folder.</p>
-        <button onClick={onExport} className="px-5 py-2 rounded-full" style={{ backgroundColor: GOLD, color:'#000', fontWeight:'bold' }}>
+        <p className="text-sm text-gray-600 mb-3">Download everything at once, or just re-download the ones you've changed since your last export.</p>
+        <button onClick={() => onExport(plan)} className="px-5 py-2 rounded-full mb-4" style={{ backgroundColor: GOLD, color:'#000', fontWeight:'bold' }}>
           ⬇️ Generate all 5 Word documents
         </button>
-        <ul className="text-xs text-gray-500 mt-3 list-disc pl-5">
-          <li>Activity Plan</li><li>Risk Assessment</li><li>Emergency Action Plan</li><li>Packing List</li><li>Menu &amp; Water Plan</li>
-        </ul>
+        <div className="text-xs font-bold text-gray-500 mb-2">Or download an individual document:</div>
+        <DocExportButtons plan={plan} onExport={onExport} />
       </div>
 
       <div className="bg-white rounded-xl shadow p-4 mb-4">
@@ -2118,7 +2130,7 @@ function Wizard({ plan, setPlan, onExit, onExport }){
           }
           if(f.type === 'review_summary'){
             return <ReviewSummarySection key={f.id} plan={plan}
-              onExport={() => onExport(plan)} />;
+              onExport={onExport} />;
           }
           const v = (plan.sections[section.id] || {})[f.id];
           return <WizardQuestion key={f.id} field={f} value={v} plan={plan}
@@ -2221,6 +2233,12 @@ function PlanDetail({ plan, onEdit, onExport, onDelete, onBack }){
       </div>
 
       {plan.activityDate && <TimelineStrip activityDate={plan.activityDate} />}
+
+      <div className="bg-white rounded-xl shadow p-4 mb-4">
+        <div className="font-bold mb-2" style={{ color: PURPLE }}>⬇️ Export individual documents</div>
+        <p className="text-sm text-gray-600 mb-3">Only made changes to one part of your plan? Re-download just that document instead of all 5.</p>
+        <DocExportButtons plan={plan} onExport={onExport} />
+      </div>
 
       <div className="bg-white rounded-xl shadow p-4 mb-4">
         <div className="font-bold mb-2" style={{ color: PURPLE }}>⚠️ Risk Assessment ({(safety.hazards||[]).length} hazards)</div>
@@ -2555,18 +2573,22 @@ function loadDocx(cb){
   document.head.appendChild(s);
 }
 
-function generateAllDocs(plan){
+/* Every exportable document — used to drive both the "export all" and
+   the individual per-document download buttons from one source of truth. */
+const DOC_GENERATORS = [
+  { key:'activityPlan',   label:'Activity Plan',          emoji:'📋', fn: generateActivityPlan },
+  { key:'riskAssessment', label:'Risk Assessment',        emoji:'⚠️', fn: generateRiskAssessment },
+  { key:'emergencyPlan',  label:'Emergency Action Plan',  emoji:'🚨', fn: generateEmergencyPlan },
+  { key:'packingList',    label:'Packing List',           emoji:'🎒', fn: generatePackingList },
+  { key:'menuWater',      label:'Menu & Water Plan',      emoji:'🍽️', fn: generateMenuWater }
+];
+
+function exportDocs(plan, keys){
+  const wanted = keys && keys.length ? keys : DOC_GENERATORS.map(d => d.key);
+  const docs = DOC_GENERATORS.filter(d => wanted.includes(d.key));
   loadDocx(() => {
-  generateActivityPlan(plan)
-    .then(()=> new Promise(r=>setTimeout(r,600)))
-    .then(()=> generateRiskAssessment(plan))
-    .then(()=> new Promise(r=>setTimeout(r,600)))
-    .then(()=> generateEmergencyPlan(plan))
-    .then(()=> new Promise(r=>setTimeout(r,600)))
-    .then(()=> generatePackingList(plan))
-    .then(()=> new Promise(r=>setTimeout(r,600)))
-    .then(()=> generateMenuWater(plan))
-    .catch(err => { console.error(err); alert("Something went wrong generating documents: " + err.message); });
+    docs.reduce((p, d, i) => p.then(()=> i>0 ? new Promise(r=>setTimeout(r,600)) : null).then(()=> d.fn(plan)), Promise.resolve())
+      .catch(err => { console.error(err); alert("Something went wrong generating documents: " + err.message); });
   });
 }
 
@@ -2797,7 +2819,7 @@ function App(){
 
       {screen === 'wizard' && currentPlan &&
         <Wizard plan={currentPlan} setPlan={setWizardPlan}
-          onExit={()=>setScreen('planDetail')} onExport={generateAllDocs} />}
+          onExit={()=>setScreen('planDetail')} onExport={exportDocs} />}
 
       {screen === 'instructions' &&
         <InstructionsScreen onBack={()=>setScreen('dashboard')} />}
@@ -2808,7 +2830,7 @@ function App(){
       {screen === 'planDetail' && currentPlan &&
         <PlanDetail plan={currentPlan}
           onEdit={()=>setScreen('wizard')}
-          onExport={generateAllDocs}
+          onExport={exportDocs}
           onDelete={deletePlan}
           onBack={()=>setScreen('dashboard')} />}
 
