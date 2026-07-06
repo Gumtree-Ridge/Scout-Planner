@@ -271,9 +271,11 @@ const LIBRARY_DATA = {
       {item:"Sleeping mat", category:"essential", weight:0.4, emoji:"🟩"},
       {item:"Gas stove and pot set (shared)", category:"essential", weight:0.5, emoji:"🍳"},
       {item:"Water bottles (min 1.5L)", category:"essential", weight:1.5, emoji:"💧"},
-      {item:"Wet/cold weather clothes", category:"essential", weight:0.5, emoji:"🧥"},
       {item:"Hike boots", category:"essential", weight:0.5, emoji:"👢"},
       {item:"Long-sleeve collared shirt", category:"essential", weight:0.2, emoji:"👕"},
+      {item:"Long pants (hike/quick-dry)", category:"essential", weight:0.3, emoji:"👖"},
+      {item:"Socks", category:"essential", weight:0.05, emoji:"🧦"},
+      {item:"Underwear", category:"essential", weight:0.05, emoji:"🩲"},
       {item:"Broad-brimmed hat", category:"essential", weight:0.1, emoji:"🪖"},
       {item:"Water shoes (for creek crossings)", category:"recommended", weight:0.3, emoji:"👟"},
       {item:"Personal first aid kit incl. snake bite bandage", category:"essential", weight:0.2, emoji:"🩹"},
@@ -1453,6 +1455,47 @@ function RiskSceneSection({ activityType, sectionData, onChange }){
 /* ============================================================
    11. EQUIPMENT ROOM SECTION (Section 8)
    ============================================================ */
+/* Grouped clothing/gear suggestions per activity type — not pre-selected,
+   added on demand so the main grid stays focused on core individual items. */
+const SUGGESTION_GROUPS = {
+  hike: [
+    { label:"Cold Weather Layers", emoji:"🥶", options:[
+      {item:"Thermal top", weight:0.15, emoji:"🧣"},
+      {item:"Thermal leggings", weight:0.15, emoji:"🥶"},
+      {item:"Puffy/insulated jacket", weight:0.4, emoji:"🧥"},
+      {item:"Beanie", weight:0.1, emoji:"🧢"},
+      {item:"Gloves", weight:0.1, emoji:"🧤"}
+    ]}
+  ],
+  camp: [
+    { label:"Cold Weather Layers", emoji:"🥶", options:[
+      {item:"Thermal top", weight:0.15, emoji:"🧣"},
+      {item:"Thermal leggings", weight:0.15, emoji:"🥶"},
+      {item:"Gloves", weight:0.1, emoji:"🧤"},
+      {item:"Scarf/buff", weight:0.05, emoji:"🧣"}
+    ]}
+  ]
+};
+
+/* Generic "things to consider" list shown at the bottom for every activity type,
+   for gear that depends on season, duration or location rather than being a given. */
+const OTHER_SUGGESTIONS = [
+  {item:"Trekking poles", weight:0.4, emoji:"🥾"},
+  {item:"Gaiters", weight:0.2, emoji:"🦵"},
+  {item:"Sunglasses", weight:0.05, emoji:"🕶️"},
+  {item:"Portable phone charger/power bank", weight:0.2, emoji:"🔋"},
+  {item:"Spare batteries", weight:0.05, emoji:"🔋"},
+  {item:"Ear plugs", weight:0.01, emoji:"🧏"},
+  {item:"Dry bag", weight:0.15, emoji:"🎒"},
+  {item:"Groundsheet/tarp", weight:0.3, emoji:"🏕️"},
+  {item:"Insect head net", weight:0.05, emoji:"🦟"},
+  {item:"Personal medication", weight:0.05, emoji:"💊"},
+  {item:"Blister kit/extra tape", weight:0.05, emoji:"🩹"},
+  {item:"Extra pair of socks", weight:0.05, emoji:"🧦"},
+  {item:"Camp shoes/sandals", weight:0.3, emoji:"🩴"},
+  {item:"Duct tape/repair kit", weight:0.1, emoji:"🧰"}
+];
+
 function EquipmentRoomSection({ activityType, sectionData, onChange, plan }){
   const baseList = LIBRARY_DATA.packing_lists[activityType] || [];
   const stored = sectionData.selectedItems;
@@ -1461,11 +1504,12 @@ function EquipmentRoomSection({ activityType, sectionData, onChange, plan }){
     if(stored && stored.length){
       const byName = {};
       stored.forEach(s => { byName[s.item] = s; });
-      const merged = baseList.map(b => ({ ...b, selected: byName[b.item] ? byName[b.item].selected : (b.category==='essential') }));
-      const customs = stored.filter(s => !baseList.some(b => b.item === s.item)).map(c => ({ ...c, emoji: c.emoji || '📦', selected:true }));
+      const merged = baseList.map(b => ({ ...b, qty: byName[b.item] ? (byName[b.item].qty||1) : 1,
+        selected: byName[b.item] ? byName[b.item].selected : (b.category==='essential') }));
+      const customs = stored.filter(s => !baseList.some(b => b.item === s.item)).map(c => ({ ...c, emoji: c.emoji || '📦', qty: c.qty||1, selected:true }));
       return [...merged, ...customs];
     }
-    return baseList.map(b => ({ ...b, selected: b.category === 'essential' }));
+    return baseList.map(b => ({ ...b, qty:1, selected: b.category === 'essential' }));
   }, [activityType]); // eslint-disable-line
 
   const [list, setList] = useState(initItems);
@@ -1473,20 +1517,30 @@ function EquipmentRoomSection({ activityType, sectionData, onChange, plan }){
   const [newItem, setNewItem] = useState({ item:'', category:'essential', weight:0.2, emoji:'📦' });
 
   useEffect(() => {
-    onChange({ selectedItems: list.filter(i => i.selected).map(i => ({ item:i.item, category:i.category, weight:i.weight, emoji:i.emoji, selected:true })) });
+    onChange({ selectedItems: list.filter(i => i.selected).map(i => ({ item:i.item, category:i.category, weight:i.weight, qty:i.qty||1, emoji:i.emoji, selected:true })) });
   }, [list]);
 
-  const weight = list.filter(i => i.selected).reduce((s,i)=>s+(i.weight||0),0);
+  const weight = list.filter(i => i.selected).reduce((s,i)=>s+((i.weight||0)*(i.qty||1)),0);
   const weightColor = weight > 10 ? '#dc2626' : (weight > 8 ? GOLD : '#16a34a');
 
   function toggle(idx){
     setList(list.map((it,i) => i===idx ? { ...it, selected: !it.selected } : it));
   }
+  function setQty(idx, qty){
+    setList(list.map((it,i) => i===idx ? { ...it, qty: Math.max(1, qty) } : it));
+  }
+  function setItemWeight(idx, w){
+    setList(list.map((it,i) => i===idx ? { ...it, weight: w } : it));
+  }
   function addItem(){
     if(!newItem.item.trim()) return;
-    setList([...list, { ...newItem, weight: parseFloat(newItem.weight)||0, selected:true }]);
+    setList([...list, { ...newItem, weight: parseFloat(newItem.weight)||0, qty:1, selected:true }]);
     setNewItem({ item:'', category:'essential', weight:0.2, emoji:'📦' });
     setShowAdd(false);
+  }
+  function addSuggestion(opt, category){
+    if(list.some(i => i.item === opt.item)) return;
+    setList([...list, { item:opt.item, category, weight:opt.weight, emoji:opt.emoji, qty:1, selected:true }]);
   }
 
   const catBadge = { essential:'🔴 Essential', recommended:'🟡 Recommended', optional:'🟢 Optional' };
@@ -1501,6 +1555,7 @@ function EquipmentRoomSection({ activityType, sectionData, onChange, plan }){
     || (libAct && libAct.weather && libAct.weather.season)
     || 'the season';
   const loc = (plan.sections.location && plan.sections.location.l1_name) || (libAct && libAct.location && libAct.location.name) || 'your location';
+  const suggestionGroups = SUGGESTION_GROUPS[activityType] || [];
 
   return (
     <div>
@@ -1516,17 +1571,60 @@ function EquipmentRoomSection({ activityType, sectionData, onChange, plan }){
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {list.map((it, idx) => (
-          <button key={idx} onClick={() => toggle(idx)}
+          <div key={idx}
             className="relative bg-white rounded-xl p-3 text-center border-4 transition"
             style={{ borderColor: it.selected ? catColor[it.category] : '#e5e7eb', opacity: it.selected ? 1 : 0.7 }}>
             {!it.selected && it.category === 'essential' && (
               <div className="absolute top-1 right-1 text-lg" title="Essential not packed!">⚠️</div>
             )}
-            <div className="text-3xl mb-1">{it.emoji || '📦'}</div>
-            <div className="text-xs font-bold leading-tight">{it.item}</div>
-            <div className="text-[10px] mt-1 font-bold" style={{ color: catColor[it.category] }}>{catBadge[it.category]}</div>
-          </button>
+            <div onClick={() => toggle(idx)} className="cursor-pointer">
+              <div className="text-3xl mb-1">{it.emoji || '📦'}</div>
+              <div className="text-xs font-bold leading-tight">{it.item}</div>
+              <div className="text-[10px] mt-1 font-bold" style={{ color: catColor[it.category] }}>{catBadge[it.category]}</div>
+            </div>
+            {it.selected && (
+              <div className="mt-2 pt-2 border-t flex items-center justify-center gap-1 text-xs flex-wrap">
+                <button type="button" onClick={() => setQty(idx, (it.qty||1)-1)} className="w-5 h-5 rounded-full border font-bold leading-none">−</button>
+                <span className="w-5 text-center">{it.qty||1}</span>
+                <button type="button" onClick={() => setQty(idx, (it.qty||1)+1)} className="w-5 h-5 rounded-full border font-bold leading-none">+</button>
+                <input type="number" step="0.05" value={it.weight}
+                  onChange={e => setItemWeight(idx, parseFloat(e.target.value)||0)}
+                  className="w-12 border rounded p-0.5 text-center ml-1" title="Weight per item (kg)" />
+                <span className="text-gray-400">kg each</span>
+              </div>
+            )}
+          </div>
         ))}
+      </div>
+
+      {suggestionGroups.map(group => {
+        const options = group.options.filter(o => !list.some(i => i.item === o.item));
+        if(options.length === 0) return null;
+        return (
+          <div key={group.label} className="mt-4">
+            <div className="text-sm font-bold mb-2" style={{ color: PURPLE }}>{group.emoji} {group.label} — add what you need</div>
+            <div className="flex flex-wrap gap-2">
+              {options.map(o => (
+                <button key={o.item} type="button" onClick={() => addSuggestion(o, 'recommended')}
+                  className="px-3 py-2 rounded-full text-sm border-2 font-bold border-gray-200">
+                  {o.emoji} {o.item} <span className="text-gray-400 font-normal">+</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+
+      <div className="mt-4">
+        <div className="text-sm font-bold mb-2" style={{ color: PURPLE }}>🤔 Other things to consider — depending on season, duration or location</div>
+        <div className="flex flex-wrap gap-2">
+          {OTHER_SUGGESTIONS.filter(o => !list.some(i => i.item === o.item)).map(o => (
+            <button key={o.item} type="button" onClick={() => addSuggestion(o, 'optional')}
+              className="px-3 py-2 rounded-full text-sm border-2 font-bold border-gray-200">
+              {o.emoji} {o.item} <span className="text-gray-400 font-normal">+</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="mt-4">
@@ -2143,7 +2241,7 @@ function PlanDetail({ plan, onEdit, onExport, onDelete, onBack }){
 
       <div className="bg-white rounded-xl shadow p-4 mb-4">
         <div className="font-bold mb-2" style={{ color: PURPLE }}>🎒 Packing List ({(equip.selectedItems||[]).length} items)</div>
-        <div className="text-sm text-gray-600">{(equip.selectedItems||[]).map(i=>i.item).join(', ') || 'No items selected yet.'}</div>
+        <div className="text-sm text-gray-600">{(equip.selectedItems||[]).map(i=> i.qty > 1 ? i.item+' x'+i.qty : i.item).join(', ') || 'No items selected yet.'}</div>
       </div>
 
       <button onClick={onDelete} className="text-sm text-red-600 underline">🗑️ Delete this plan</button>
@@ -2241,7 +2339,7 @@ function generateActivityPlan(plan){
   const { Document, Paragraph, TextRun } = dx();
   const s = plan.sections;
   const get = (sec, f) => (s[sec] && s[sec][f]) || '';
-  const equip = (s.equipment && s.equipment.selectedItems || []).map(i=>i.item).join(', ');
+  const equip = (s.equipment && s.equipment.selectedItems || []).map(i => i.qty > 1 ? i.item+' x'+i.qty : i.item).join(', ');
   const dates = get('activityInfo','s1_dateEnd') && get('activityInfo','s1_dateEnd') !== get('activityInfo','s1_dates')
     ? formatDate(get('activityInfo','s1_dates')) + " to " + formatDate(get('activityInfo','s1_dateEnd'))
     : formatDate(plan.activityDate);
@@ -2424,11 +2522,11 @@ function generateEmergencyPlan(plan){
 function generatePackingList(plan){
   const { Document } = dx();
   const items = (plan.sections.equipment && plan.sections.equipment.selectedItems) || [];
-  const rows = items.map(i => [i.item, i.category]);
-  if(rows.length === 0) rows.push(["No items selected",""]);
+  const rows = items.map(i => [i.item, String(i.qty||1), i.category]);
+  if(rows.length === 0) rows.push(["No items selected","",""]);
   const fn = "Packing_List.docx";
   const doc = new Document({ sections:[{ ...makeHeaderFooter(fn),
-    children:[ ...titleBlock("Packing List", plan), buildTable(rows, ["Item","Category"]) ] }] });
+    children:[ ...titleBlock("Packing List", plan), buildTable(rows, ["Item","Qty","Category"]) ] }] });
   return downloadDoc(doc, fn);
 }
 
