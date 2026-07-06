@@ -387,7 +387,7 @@ const WIZARD_SECTIONS = [
       {id:"p2_oasStage", label:"What OAS stage are most scouts at?", type:"select", options:[1,2,3,4,5,6,7],
         hint:"OAS (Outdoor Adventure Skills) is the Scouts Australia rating system — Stage 1 is beginner, Stage 7 is expert"},
       {id:"p3_specialNeeds", label:"Do any scouts have medical needs, disabilities or need extra support?", type:"textarea",
-        hint:"Include allergies, medications, mobility needs — this stays private between you and your leader"},
+        hint:"Include allergies, medications, mobility needs, and any reasonable adjustments needed. A reasonable adjustment means modifying the requirements of the activity so it's more inclusive — e.g. a scout who uses a wheelchair might not carry a pack, or someone might do a shorter version of the route — while keeping the core purpose of the activity. This stays private between you and your leader."},
       {id:"p4_leaderCount", label:"How many leaders will be there?", type:"number"},
       {id:"p4a_leaderNames", label:"Which leaders are coming?", type:"textarea",
         placeholder:"One name per line",
@@ -417,6 +417,8 @@ const WIZARD_SECTIONS = [
       {id:"l2_start", label:"What is the address or map reference of the start point?", type:"text",
         hint:"A map reference (grid reference) looks like GR 827810 — find it on a topographic map"},
       {id:"l3_finish", label:"What is the address or map reference of the finish point?", type:"text"},
+      {id:"l8_route", label:"Describe your route", type:"textarea",
+        hint:"A few sentences is fine — where you go, key junctions, and any alternate/shorter route. Your printed Activity Plan will have a space to paste in a Google Maps screenshot of the route too. We don't use separate route cards — this description plus the map screenshot covers it."},
       {id:"l4_terrain", label:"What is the terrain like?", type:"select",
         options:["Sealed path","Formed track","Unformed track","Cross-country / off-track","Flat water","Moving water","Indoor venue"]},
       {id:"l5_tenure", label:"What park or land does the activity take place in?", type:"text",
@@ -436,7 +438,9 @@ const WIZARD_SECTIONS = [
       {id:"t3_overdue", label:"What is your overdue time?", type:"time",
         hint:"The overdue time is when your emergency contact calls for help if they haven't heard from you. Usually 1–2 hours after your planned finish."},
       {id:"t4_emergContact", label:"Who is your emergency home contact and what's their phone number?", type:"text",
-        hint:"Pick someone who will NOT be on the activity and who will definitely be reachable"}
+        hint:"Pick someone who will NOT be on the activity and who will definitely be reachable"},
+      {id:"t5_weather", label:"What's the weather forecast for your activity dates, and how might it affect your plans?", type:"textarea",
+        hint:"e.g. expected temperature range, chance of rain, wind, fire danger — and what you'll do if it's hot, wet or cold. Double-check BOM and Fires Near Me closer to the date, since this forecast will be old by the time you go."}
     ]
   },
   {
@@ -488,8 +492,10 @@ const WIZARD_SECTIONS = [
     id:"transport", number:11, label:"Transport",
     intro:"How is everyone getting there and back?",
     fields:[
+      {id:"tr0_meeting", label:"Where and when will everyone meet before you leave?", type:"text",
+        hint:"e.g. Scout Hall car park, 7:00am — the meeting point can be different from the activity's start point"},
       {id:"tr1_method", label:"How are scouts getting to and from the activity?", type:"textarea",
-        hint:"e.g. Leader vehicles, bus, public transport"},
+        hint:"e.g. Leader vehicles, bus, public transport — is everyone using the same method, or a mix?"},
       {id:"tr2_drivers", label:"Who are the drivers and what vehicles will they use?", type:"textarea"},
       {id:"tr3_licensed", label:"Are all drivers licensed, insured and sober?", type:"yesno",
         hint:"All drivers must have a valid licence, registered and insured vehicle, and zero blood alcohol. This is a Scouts Australia rule."},
@@ -516,7 +522,12 @@ const WIZARD_SECTIONS = [
       {id:"ld1_aaLeader", label:"Who is the Activity Leader (AA Leader)?", type:"text",
         hint:"The AA Leader is the qualified leader responsible for safety. They need a specific Adventurous Activity qualification."},
       {id:"ld2_firstAid", label:"Who in the group holds first aid qualifications?", type:"textarea"},
-      {id:"ld3_others", label:"List all other attending leaders and their roles", type:"textarea"}
+      {id:"ld3_others", label:"List all other attending leaders and their roles", type:"textarea"},
+      {id:"ld4_approvalLevel", label:"Who needs to approve this activity plan?", type:"select",
+        options:["Section Leader","Group Leader","State Office","Not sure yet"],
+        hint:"Check the WACIR to work out the right level of approval for this activity — some activities only need Section or Group Leader sign-off, others need State Office. If you're not sure, choose 'Not sure yet', leave the name below blank, and check with your mentor or Section Leader before the activity goes ahead."},
+      {id:"ld5_approverName", label:"Name of the approving leader", type:"text",
+        hint:"Leave blank until you've confirmed who this should be"}
     ]
   },
   {
@@ -532,7 +543,18 @@ const WIZARD_SECTIONS = [
     ]
   },
   {
-    id:"review", number:15, label:"Review & Export",
+    id:"preActivity", number:15, label:"Pre-Activity Actions",
+    intro:"Tick off what you need to do before the activity goes ahead.",
+    fields:[
+      {id:"pa1_checklist", label:"Pre-activity actions", type:"checkboxes",
+        options:["Activity plan approved by the right person","Medical needs and reasonable adjustments reviewed",
+          "Equipment and gear checked","Weather and fire danger checked (day before departure)",
+          "Parents and emergency contact notified of final details","Risk assessment reviewed by AA Leader"],
+        hint:"Tick these off as you complete them in the lead-up to the activity — they'll show on your printed Activity Plan as a checklist for your leader."}
+    ]
+  },
+  {
+    id:"review", number:16, label:"Review & Export",
     intro:"Almost there! Let's check everything and export your documents.",
     fields:[{id:"review_summary", type:"review_summary"}]
   }
@@ -2187,19 +2209,51 @@ function downloadDoc(doc, filename){
   });
 }
 
+function sectionHeading(text){
+  const { Paragraph, TextRun } = dx();
+  return new Paragraph({ spacing:{ before:280, after:120 },
+    children:[ new TextRun({ text, bold:true, size:26, color:"6B2D8B" }) ] });
+}
+
+function mapPlaceholderBox(){
+  const { Table, TableRow, TableCell, Paragraph, TextRun, WidthType, BorderStyle, AlignmentType } = dx();
+  const border = { style: BorderStyle.DASHED, size:2, color:"9CA3AF" };
+  const blank = () => new Paragraph({ text:"" });
+  return new Table({ width:{ size:100, type:WidthType.PERCENTAGE },
+    borders:{ top:border, bottom:border, left:border, right:border, insideHorizontal:border, insideVertical:border },
+    rows:[ new TableRow({ children:[ new TableCell({ shading:{ fill:"F9FAFB" }, children:[
+      blank(), blank(), blank(),
+      new Paragraph({ alignment: AlignmentType.CENTER, children:[ new TextRun({ text:"📍 Paste a Google Maps screenshot of your route here", italics:true, color:"6B7280" }) ] }),
+      blank(), blank(), blank()
+    ] }) ] }) ] });
+}
+
+function checklistParas(items, selected){
+  const { Paragraph, TextRun } = dx();
+  const sel = Array.isArray(selected) ? selected : [];
+  if(items.length === 0) return [ new Paragraph({ text:"No pre-activity actions recorded." }) ];
+  return items.map(item => new Paragraph({
+    children:[ new TextRun({ text:(sel.includes(item) ? "☑ " : "☐ ") + item }) ]
+  }));
+}
+
 function generateActivityPlan(plan){
-  const { Document } = dx();
+  const { Document, Paragraph, TextRun } = dx();
   const s = plan.sections;
   const get = (sec, f) => (s[sec] && s[sec][f]) || '';
   const equip = (s.equipment && s.equipment.selectedItems || []).map(i=>i.item).join(', ');
-  const rows = [
+  const dates = get('activityInfo','s1_dateEnd') && get('activityInfo','s1_dateEnd') !== get('activityInfo','s1_dates')
+    ? formatDate(get('activityInfo','s1_dates')) + " to " + formatDate(get('activityInfo','s1_dateEnd'))
+    : formatDate(plan.activityDate);
+
+  const overviewRows = [
     ["Activity title", plan.title || ''],
-    ["Activity description", get('activityInfo','s1_desc')],
+    ["Activity description / concept", get('activityInfo','s1_desc')],
     ["Scout Group", get('activityInfo','s1_group') || '1st Jerrabomberra Scout Group'],
     ["Activity type", plan.activityType],
-    ["Dates", get('activityInfo','s1_dateEnd') && get('activityInfo','s1_dateEnd') !== get('activityInfo','s1_dates')
-      ? formatDate(get('activityInfo','s1_dates')) + " to " + formatDate(get('activityInfo','s1_dateEnd'))
-      : formatDate(plan.activityDate)],
+    ["Dates", dates],
+    ["Start time", get('timing','t1_start')],
+    ["Finish time", get('timing','t2_finish')],
     ["Location", get('location','l1_name')],
     ["Start point", get('location','l2_start')],
     ["Finish point", get('location','l3_finish')],
@@ -2210,18 +2264,71 @@ function generateActivityPlan(plan){
     ["Scouts attending", get('participants','p1a_youthNames')],
     ["Leaders attending", get('participants','p4a_leaderNames')],
     ["OAS stage", get('participants','p2_oasStage')],
-    ["Supervision", get('supervision','sv1_type')],
+    ["Supervision", get('supervision','sv1_type')]
+  ];
+
+  const transportRows = [
+    ["Meeting point and time", get('transport','tr0_meeting')],
+    ["Getting there and back", get('transport','tr1_method')],
+    ["Drivers and vehicles", get('transport','tr2_drivers')],
+    ["Drivers licensed, insured and sober", get('transport','tr3_licensed')],
+    ["Vehicle parking", get('transport','tr4_parking')]
+  ];
+
+  const commsRows = [
     ["Primary comms", get('comms','c1_primary')],
     ["Backup comms", get('comms','c2_alternate')],
     ["Safe havens", get('location','l7_safeHavens')],
     ["Overdue time", get('timing','t3_overdue')],
     ["Emergency home contact", get('timing','t4_emergContact')],
-    ["Cancellation triggers", get('emergencyPlan','e4_cancel')],
-    ["Equipment summary", equip]
+    ["Cancellation triggers", get('emergencyPlan','e4_cancel')]
   ];
+
+  const environmentRows = [
+    ["Waste management", get('environment','en1_waste')],
+    ["Minimal impact plan", get('environment','en2_impact')],
+    ["Environmental sensitivities", get('environment','en3_sensitivities')]
+  ];
+
+  const approvalLevel = get('leadership','ld4_approvalLevel');
+  const approverName = get('leadership','ld5_approverName');
+  const approvalRows = [
+    ["Approval level required (per WACIR)", approvalLevel || 'Not yet confirmed — check with mentor or Section Leader'],
+    ["Approved by", approverName || 'Not yet approved']
+  ];
+
+  const otherAdminRows = [
+    ["Equipment summary", equip],
+    ["Estimated cost per person", get('menuWater','m4_cost') ? "$"+get('menuWater','m4_cost') : '']
+  ];
+
+  const children = [
+    ...titleBlock("Activity Plan", plan),
+    sectionHeading("Overview"), buildTable(overviewRows),
+    sectionHeading("Route & Map"),
+    new Paragraph({ children:[ new TextRun({ text: get('location','l8_route') || 'No route description provided.' }) ] }),
+    new Paragraph({ text:"" }),
+    mapPlaceholderBox(),
+    sectionHeading("Weather"),
+    new Paragraph({ children:[ new TextRun({ text: get('timing','t5_weather') || 'No forecast recorded — check BOM and Fires Near Me before departure.' }) ] }),
+    sectionHeading("Transport Plan"), buildTable(transportRows),
+    sectionHeading("Communications & Emergency"), buildTable(commsRows),
+    sectionHeading("Environment & Minimal Impact"), buildTable(environmentRows),
+    sectionHeading("Medical Needs & Reasonable Adjustments"),
+    new Paragraph({ children:[ new TextRun({ text: get('participants','p3_specialNeeds') || 'None recorded.' }) ] }),
+    sectionHeading("Approvals"), buildTable(approvalRows),
+    sectionHeading("Pre-Activity Actions"),
+    ...checklistParas(
+      ["Activity plan approved by the right person","Medical needs and reasonable adjustments reviewed",
+        "Equipment and gear checked","Weather and fire danger checked (day before departure)",
+        "Parents and emergency contact notified of final details","Risk assessment reviewed by AA Leader"],
+      get('preActivity','pa1_checklist')
+    ),
+    sectionHeading("Other Admin"), buildTable(otherAdminRows)
+  ];
+
   const fn = "Activity_Plan.docx";
-  const doc = new Document({ sections:[{ ...makeHeaderFooter(fn),
-    children:[ ...titleBlock("Activity Plan", plan), buildTable(rows) ] }] });
+  const doc = new Document({ sections:[{ ...makeHeaderFooter(fn), children }] });
   return downloadDoc(doc, fn);
 }
 
